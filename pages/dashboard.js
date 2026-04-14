@@ -52,8 +52,14 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div style={{ height: "100vh", background: "#080a0c", display: "flex", alignItems: "center", justifyContent: "center", color: "#d4b68e", fontFamily: "serif", fontSize: 18 }}>
-        Loading Cucuma...
+      <div style={{ height: "100vh", background: "#080a0c", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", color: "#d4b68e", fontFamily: "serif", fontSize: 18, gap: 20 }}>
+        {shop ? "Loading Cucuma..." : (
+          <div style={{ textAlign: "center" }}>
+            <div style={{ fontSize: 24, marginBottom: 16 }}>Welcome to Cucuma ✦</div>
+            <div style={{ fontSize: 14, color: "#6b6560", marginBottom: 32 }}>Please install the app from your Shopify store first.</div>
+            <a href="https://cucuma.vercel.app" style={{ background: "#d4b68e", color: "#1a0e04", padding: "12px 28px", borderRadius: 100, textDecoration: "none", fontFamily: "sans-serif", fontSize: 14, fontWeight: 600 }}>Go to Homepage →</a>
+          </div>
+        )}
       </div>
     );
   }
