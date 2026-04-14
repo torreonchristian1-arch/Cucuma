@@ -11,11 +11,10 @@ export default function Settings() {
   const [saved, setSaved] = useState(false);
 
   function handleSave() { setSaved(true); setTimeout(() => setSaved(false), 3000); }
+  function goTo(href) { router.push(`${href}?shop=${shop || ""}`); }
 
   const Card = ({ children, danger }) => (
-    <div style={{ background: theme.surface, border: `1px solid ${danger ? "#fecaca" : theme.border}`, borderRadius: 14, padding: 22, boxShadow: theme.shadow }}>
-      {children}
-    </div>
+    <div style={{ background: theme.surface, border: `1px solid ${danger ? "#fecaca" : theme.border}`, borderRadius: 14, padding: 22, boxShadow: theme.shadow }}>{children}</div>
   );
 
   const SectionTitle = ({ children }) => (
@@ -74,9 +73,34 @@ export default function Settings() {
               <input defaultValue={shop || ""} readOnly style={{ width: "100%", background: theme.inputBg, border: `1px solid ${theme.border}`, borderRadius: 9, padding: "10px 14px", color: theme.textSub, fontSize: 14, fontWeight: 500 }} />
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 14px", background: theme.greenBg, border: `1px solid ${theme.greenBorder}`, borderRadius: 10 }}>
-              <div style={{ width: 8, height: 8, borderRadius: "50%", background: theme.green, flexShrink: 0 }}></div>
+              <div style={{ width: 8, height: 8, borderRadius: "50%", background: theme.green }}></div>
               <span style={{ fontSize: 13, fontWeight: 600, color: theme.green }}>App installed and active</span>
             </div>
+          </Card>
+
+          {/* Custom Domain Info */}
+          <Card>
+            <SectionTitle>Custom Domain</SectionTitle>
+            <p style={{ fontSize: 13, color: theme.textSub, lineHeight: 1.7, marginBottom: 16 }}>
+              Want to use your own domain like <strong style={{ color: theme.text }}>mybrand.com</strong>? Custom domains are managed through Shopify, not Cucuma. Follow these steps:
+            </p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 16 }}>
+              {[
+                "Buy a domain from GoDaddy, Namecheap, or any registrar",
+                "In Shopify admin → Settings → Domains → Connect existing domain",
+                "Enter your domain name and follow the DNS instructions",
+                "Wait 24–48 hours for DNS propagation",
+                "Your store will be live at your custom domain ✓",
+              ].map((step, i) => (
+                <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+                  <div style={{ width: 22, height: 22, borderRadius: "50%", background: theme.goldBg, border: `1px solid ${theme.goldBorder}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, color: theme.gold, flexShrink: 0, marginTop: 1 }}>{i + 1}</div>
+                  <span style={{ fontSize: 13, color: theme.textSub, lineHeight: 1.5 }}>{step}</span>
+                </div>
+              ))}
+            </div>
+            <a href="https://help.shopify.com/en/manual/domains" target="_blank" rel="noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 6, background: theme.goldBg, border: `1px solid ${theme.goldBorder}`, borderRadius: 9, padding: "9px 16px", fontSize: 12, fontWeight: 700, color: theme.goldText, textDecoration: "none" }}>
+              View Shopify Domain Guide →
+            </a>
           </Card>
 
           {/* Webhooks */}
@@ -86,10 +110,10 @@ export default function Settings() {
               <span style={{ fontSize: 10, fontWeight: 700, color: theme.green, background: theme.greenBg, border: `1px solid ${theme.greenBorder}`, borderRadius: 100, padding: "4px 12px", letterSpacing: "0.06em" }}>ALL ACTIVE</span>
             </div>
             {["orders/create", "orders/fulfilled", "orders/cancelled", "products/update"].map((topic, i, arr) => (
-              <div key={topic} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: i < arr.length - 1 ? `1px solid ${theme.border}` : "none" }}>
+              <div key={topic} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: i < arr.length - 1 ? `1px solid ${theme.border}` : "none" }}>
                 <code style={{ fontSize: 13, color: theme.textSub }}>{topic}</code>
-                <div style={{ display: "flex", alignItems: "center", gap: 6, background: theme.greenBg, border: `1px solid ${theme.greenBorder}`, borderRadius: 100, padding: "3px 12px" }}>
-                  <div style={{ width: 6, height: 6, borderRadius: "50%", background: theme.green }}></div>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, background: theme.greenBg, border: `1px solid ${theme.greenBorder}`, borderRadius: 100, padding: "3px 10px" }}>
+                  <div style={{ width: 5, height: 5, borderRadius: "50%", background: theme.green }}></div>
                   <span style={{ fontSize: 11, fontWeight: 700, color: theme.green }}>Active</span>
                 </div>
               </div>
@@ -108,6 +132,16 @@ export default function Settings() {
               ))}
             </div>
           </Card>
+
+          {/* Help Center Link */}
+          <div onClick={() => goTo("/help")} style={{ background: theme.surface, border: `1px solid ${theme.border}`, borderRadius: 14, padding: 20, boxShadow: theme.shadow, cursor: "pointer", display: "flex", alignItems: "center", gap: 16, transition: "all 0.15s" }}>
+            <div style={{ width: 44, height: 44, borderRadius: 12, background: theme.goldBg, border: `1px solid ${theme.goldBorder}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, flexShrink: 0 }}>❓</div>
+            <div>
+              <div style={{ fontFamily: "'Fraunces', serif", fontSize: 15, fontWeight: 700, color: theme.text, marginBottom: 3 }}>Help Center & FAQ</div>
+              <div style={{ fontSize: 12, color: theme.textMuted }}>Find answers to common questions about Cucuma</div>
+            </div>
+            <span style={{ marginLeft: "auto", color: theme.gold, fontSize: 20 }}>→</span>
+          </div>
 
           {/* Danger */}
           <Card danger>
