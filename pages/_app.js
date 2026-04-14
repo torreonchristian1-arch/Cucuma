@@ -86,7 +86,7 @@ export default function App({ Component, pageProps }) {
 
   return (
     <ThemeContext.Provider value={{ mode, theme, toggleTheme }}>
-      <style global jsx>{`
+      <style dangerouslySetInnerHTML={{__html: `
         @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,600;0,700;0,900;1,400;1,700&family=Manrope:wght@400;500;600;700&display=swap');
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         html { -webkit-font-smoothing: antialiased; }
@@ -97,7 +97,7 @@ export default function App({ Component, pageProps }) {
         input, button, textarea { font-family: 'Manrope', sans-serif; }
         input:focus, textarea:focus { outline: none; }
         a { text-decoration: none; }
-      `}</style>
+      `}} />
       <Component {...pageProps} />
     </ThemeContext.Provider>
   );

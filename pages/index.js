@@ -91,7 +91,7 @@ export default function Home() {
         <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400;1,600&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
       </Head>
 
-      <style>{`
+      <style dangerouslySetInnerHTML={{__html: `
         :root {
           --cream: #FAF7F2;
           --cream-dark: #F2EDE4;
@@ -311,7 +311,7 @@ export default function Home() {
           .proof-grid { grid-template-columns: 1fr 1fr; }
           .footer-grid { grid-template-columns: 1fr; }
         }
-      `}</style>
+      `}} />
 
       {/* ── NAV ── */}
       <nav className={`nav${navSolid ? " solid" : ""}`}>
