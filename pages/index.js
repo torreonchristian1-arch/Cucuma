@@ -3,30 +3,10 @@ import { useState, useEffect, useRef } from "react";
 
 const INSTALL_URL = "https://cucuma.vercel.app/api/auth/install?shop=";
 
-// ── Currency Config ───────────────────────────────────────────────
-const CURRENCIES = {
-  PH: { code: "PHP", symbol: "₱", name: "Philippine Peso", flag: "🇵🇭" },
-  US: { code: "USD", symbol: "$", name: "US Dollar", flag: "🇺🇸" },
-  AU: { code: "AUD", symbol: "A$", name: "Australian Dollar", flag: "🇦🇺" },
-  GB: { code: "GBP", symbol: "£", name: "British Pound", flag: "🇬🇧" },
-  SG: { code: "SGD", symbol: "S$", name: "Singapore Dollar", flag: "🇸🇬" },
-  MY: { code: "MYR", symbol: "RM", name: "Malaysian Ringgit", flag: "🇲🇾" },
-  ID: { code: "IDR", symbol: "Rp", name: "Indonesian Rupiah", flag: "🇮🇩" },
-  DEFAULT: { code: "USD", symbol: "$", name: "US Dollar", flag: "🌍" },
-};
-
-const RATES = { PHP: 56, USD: 1, AUD: 1.55, GBP: 0.79, SGD: 1.35, MYR: 4.72, IDR: 16000 };
-
-function fp(usdPrice, currency) {
-  if (!usdPrice) return `${currency.symbol}0`;
-  const rate = RATES[currency.code] || 1;
-  const val = usdPrice * rate;
-  const rounded = currency.code === "IDR" ? Math.round(val / 1000) * 1000
-    : ["PHP", "MYR"].includes(currency.code) ? Math.round(val / 10) * 10
-    : Math.round(val * 100) / 100;
-  if (currency.code === "IDR") return `${currency.symbol}${rounded.toLocaleString("id-ID")}`;
-  const decimals = ["USD", "GBP", "AUD", "SGD"].includes(currency.code) ? 2 : 0;
-  return `${currency.symbol}${rounded.toLocaleString(undefined, { minimumFractionDigits: decimals, maximumFractionDigits: decimals })}`;
+// ── USD only ──────────────────────────────────────────────────────
+function fp(usdPrice) {
+  if (!usdPrice && usdPrice !== 0) return "$0";
+  return `$${usdPrice.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 const PRODUCTS = [
@@ -91,28 +71,18 @@ function Reveal({ children, delay = 0, direction = "up", style = {} }) {
 }
 
 export default function Home() {
-  const [currency, setCurrency] = useState(CURRENCIES.PH);
   const [shopInput, setShopInput] = useState("");
   const [email, setEmail] = useState("");
   const [emailSent, setEmailSent] = useState(false);
-  const [showPicker, setShowPicker] = useState(false);
   const [navScrolled, setNavScrolled] = useState(false);
   const [heroVisible, setHeroVisible] = useState(false);
 
   useEffect(() => {
-    // Detect country
-    fetch("https://ipapi.co/json/")
-      .then(r => r.json())
-      .then(d => { const c = CURRENCIES[d.country_code]; if (c) setCurrency(c); })
-      .catch(() => {});
-
     // Nav scroll effect
     const onScroll = () => setNavScrolled(window.scrollY > 40);
     window.addEventListener("scroll", onScroll);
-
     // Hero entrance
     setTimeout(() => setHeroVisible(true), 100);
-
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
@@ -124,7 +94,7 @@ export default function Home() {
     window.location.href = INSTALL_URL + shop;
   }
 
-  const C = currency;
+  
 
   return (
     <>
@@ -210,30 +180,11 @@ export default function Home() {
         </div>
 
         <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-          {/* Currency picker */}
-          <div style={{ position: "relative" }}>
-            <button onClick={() => setShowPicker(!showPicker)} style={{ display: "flex", alignItems: "center", gap: 6, background: "#fff8ed", border: "1px solid #f0d090", borderRadius: 8, padding: "6px 12px", cursor: "pointer", fontSize: 13, fontWeight: 700, color: "#b8862a", transition: "all 0.15s" }}>
-              <span>{C.flag}</span><span>{C.code}</span><span style={{ fontSize: 9, opacity: 0.6 }}>▾</span>
-            </button>
-            {showPicker && (
-              <div className="picker-anim" style={{ position: "absolute", top: "calc(100% + 8px)", right: 0, background: "white", border: "1px solid #ebe6de", borderRadius: 14, boxShadow: "0 12px 40px rgba(0,0,0,0.12)", minWidth: 210, overflow: "hidden", zIndex: 200 }}>
-                <div style={{ padding: "10px 14px", fontSize: 10, fontWeight: 700, color: "#9a8878", letterSpacing: "0.1em", textTransform: "uppercase", borderBottom: "1px solid #ebe6de" }}>Select Currency</div>
-                {Object.entries(CURRENCIES).filter(([k]) => k !== "DEFAULT").map(([cc, cur]) => (
-                  <div key={cc} className="currency-opt" onClick={() => { setCurrency(cur); setShowPicker(false); }}
-                    style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", cursor: "pointer", background: C.code === cur.code ? "#fff8ed" : "white", transition: "background 0.12s" }}>
-                    <span style={{ fontSize: 18 }}>{cur.flag}</span>
-                    <div><div style={{ fontSize: 13, fontWeight: 700, color: "#1a1208" }}>{cur.code}</div><div style={{ fontSize: 11, color: "#9a8878" }}>{cur.name}</div></div>
-                    {C.code === cur.code && <span style={{ marginLeft: "auto", color: "#b8862a" }}>✓</span>}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
           <a href="https://cucuma.vercel.app/dashboard" className="nav-link" style={{ fontSize: 14 }}>Login</a>
           <a href="#install" className="btn-gold" style={{ fontSize: 13, padding: "9px 20px" }}>Get Started →</a>
         </div>
       </nav>
-      {showPicker && <div style={{ position: "fixed", inset: 0, zIndex: 99 }} onClick={() => setShowPicker(false)} />}
+      
 
       {/* ── HERO ── */}
       <section className="hero-pad" style={{ minHeight: "100vh", padding: "120px 48px 80px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 60, alignItems: "center", background: "linear-gradient(150deg, #faf9f7 55%, #fff8ed 100%)", position: "relative", overflow: "hidden" }} id="hero">
@@ -245,7 +196,7 @@ export default function Home() {
           {/* Badge */}
           <div style={{ opacity: heroVisible ? 1 : 0, transform: heroVisible ? "none" : "translateY(20px)", transition: "all 0.6s 0.1s", display: "inline-flex", alignItems: "center", gap: 8, background: "#fff8ed", border: "1px solid #f0d090", borderRadius: 100, padding: "6px 16px", fontSize: 12, fontWeight: 700, color: "#b8862a", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 28 }}>
             <span className="live-dot" style={{ width: 6, height: 6, borderRadius: "50%", background: "#16a34a", display: "inline-block" }}></span>
-            Now Live · {C.flag} Pricing in {C.code}
+            Now Live · Pricing in USD
           </div>
 
           {/* Headline */}
@@ -276,7 +227,7 @@ export default function Home() {
               onBlur={e => { e.target.style.borderColor = "#ebe6de"; e.target.style.boxShadow = "0 2px 8px rgba(0,0,0,0.06)"; }} />
             <button type="submit" className="btn-gold">Install App →</button>
           </form>
-          <p style={{ opacity: heroVisible ? 0.7 : 0, transition: "opacity 0.7s 0.65s", fontSize: 12, color: "#9a8878" }}>No credit card required · Cancel anytime · {fp(0, C)} upfront inventory</p>
+          <p style={{ opacity: heroVisible ? 0.7 : 0, transition: "opacity 0.7s 0.65s", fontSize: 12, color: "#9a8878" }}>No credit card required · Cancel anytime · $0 upfront inventory</p>
         </div>
 
         {/* Hero images */}
@@ -294,7 +245,7 @@ export default function Home() {
           <div className="float-badge" style={{ position: "absolute", bottom: -16, left: "50%", transform: "translateX(-50%)", background: "white", borderRadius: 16, padding: "14px 22px", boxShadow: "0 20px 60px rgba(0,0,0,0.14)", display: "flex", alignItems: "center", gap: 14, whiteSpace: "nowrap" }}>
             <div style={{ width: 42, height: 42, borderRadius: 12, background: "linear-gradient(135deg, #b8862a, #8a6010)", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontSize: 20 }}>✦</div>
             <div>
-              <div style={{ fontWeight: 700, fontSize: 14, color: "#1a1208" }}>{fp(5087.7, C)} earned</div>
+              <div style={{ fontWeight: 700, fontSize: 14, color: "#1a1208" }}>{fp(5087.7)} earned</div>
               <div style={{ fontSize: 11, color: "#9a8878" }}>by sellers this month</div>
             </div>
           </div>
@@ -357,7 +308,7 @@ export default function Home() {
                 <div style={{ padding: "12px 14px" }}>
                   <div style={{ fontSize: 10, fontWeight: 700, color: "#b8862a", letterSpacing: "0.06em", marginBottom: 4 }}>{p.category.toUpperCase()}</div>
                   <div style={{ fontSize: 13, fontWeight: 700, color: "#1a1208", marginBottom: 5 }}>{p.name}</div>
-                  <div style={{ fontFamily: "'Fraunces', serif", fontSize: 16, fontWeight: 700, color: "#1a1208" }}>{fp(p.usdPrice, C)}</div>
+                  <div style={{ fontFamily: "'Fraunces', serif", fontSize: 16, fontWeight: 700, color: "#1a1208" }}>{fp(p.usdPrice)}</div>
                 </div>
               </div>
             </Reveal>
@@ -374,9 +325,9 @@ export default function Home() {
               Plans That Grow<br /><em style={{ color: "#b8862a" }}>With Your Brand</em>
             </h2>
             <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "#fff8ed", border: "1px solid #f0d090", borderRadius: 100, padding: "6px 16px", marginTop: 8 }}>
-              <span style={{ fontSize: 14 }}>{C.flag}</span>
-              <span style={{ fontSize: 12, fontWeight: 700, color: "#b8862a" }}>Prices in {C.code} · {C.name}</span>
-              <button onClick={() => setShowPicker(true)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 11, color: "#b8862a", fontWeight: 700, textDecoration: "underline", padding: 0 }}>Change</button>
+              <span style={{ fontSize: 14 }}></span>
+              <span style={{ fontSize: 12, fontWeight: 700, color: "#b8862a" }}>Prices in USD</span>
+              <button style={{ background: "none", border: "none", cursor: "pointer", fontSize: 11, color: "#b8862a", fontWeight: 700, textDecoration: "underline", padding: 0 }}>Change</button>
             </div>
           </div>
         </Reveal>
@@ -388,7 +339,7 @@ export default function Home() {
                 <div style={{ fontSize: 13, fontWeight: 700, color: plan.dark ? "#d4a84e" : "#b8862a", marginBottom: 8 }}>{plan.name}</div>
                 <div style={{ display: "flex", alignItems: "flex-end", gap: 4, marginBottom: 8 }}>
                   <span style={{ fontFamily: "'Fraunces', serif", fontSize: 42, fontWeight: 900, color: plan.dark ? "white" : "#1a1208", lineHeight: 1 }}>
-                    {plan.usdPrice ? fp(plan.usdPrice, C) : "Custom"}
+                    {plan.usdPrice ? fp(plan.usdPrice) : "Custom"}
                   </span>
                   {plan.period && <span style={{ fontSize: 14, color: plan.dark ? "#7a6a5a" : "#9a8878", marginBottom: 7 }}>{plan.period}</span>}
                 </div>
@@ -422,7 +373,7 @@ export default function Home() {
           <Reveal direction="left">
             <div style={{ background: "#111010", border: "1px solid #2a2720", borderRadius: 18, padding: "28px" }}>
               <div style={{ fontSize: 11, fontWeight: 700, color: "#6b5a4a", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 20 }}>Others (MLM / Affiliate)</div>
-              {[["Sale Price", fp(53.6, C)], ["Commission 30%", "×30%"], ["Your Profit", fp(16.07, C)]].map(([l, v], i) => (
+              {[["Sale Price", fp(53.6)], ["Commission 30%", "×30%"], ["Your Profit", fp(16.07)]].map(([l, v], i) => (
                 <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "11px 0", borderBottom: i < 2 ? "1px solid #2a2720" : "none" }}>
                   <span style={{ fontSize: 13, color: "#6b5a4a" }}>{l}</span>
                   <span style={{ fontSize: 13, fontWeight: 700, color: i === 2 ? "#f87171" : "#a09080" }}>{v}</span>
@@ -433,7 +384,7 @@ export default function Home() {
           <Reveal direction="right">
             <div style={{ background: "#1a1208", border: "2px solid #d4a84e", borderRadius: 18, padding: "28px", boxShadow: "0 0 40px rgba(212,168,78,0.12)" }}>
               <div style={{ fontSize: 11, fontWeight: 700, color: "#d4a84e", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 20 }}>Cucuma® Private Label</div>
-              {[["Sale Price", fp(53.6, C)], ["Wholesale Cost", `−${fp(9.82, C)}`], ["Your Profit", fp(43.75, C)]].map(([l, v], i) => (
+              {[["Sale Price", fp(53.6)], ["Wholesale Cost", `−${fp(9.82)}`], ["Your Profit", fp(43.75)]].map(([l, v], i) => (
                 <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "11px 0", borderBottom: i < 2 ? "1px solid #2a2720" : "none" }}>
                   <span style={{ fontSize: 13, color: "#a09080" }}>{l}</span>
                   <span style={{ fontSize: 13, fontWeight: 700, color: i === 2 ? "#4ade80" : "#e8e0d0" }}>{v}</span>
@@ -447,7 +398,7 @@ export default function Home() {
             <Reveal key={i} delay={i * 100} direction="up">
               <div style={{ background: "#111010", border: "1px solid #2a2720", borderRadius: 16, padding: "22px 30px", textAlign: "center", minWidth: 160 }}>
                 <div style={{ fontSize: 12, color: "#6b5a4a", fontWeight: 600, marginBottom: 6 }}>{orders.toLocaleString()} orders</div>
-                <div style={{ fontFamily: "'Fraunces', serif", fontSize: 28, fontWeight: 900, color: "#d4a84e" }}>{fp(profit, C)}+</div>
+                <div style={{ fontFamily: "'Fraunces', serif", fontSize: 28, fontWeight: 900, color: "#d4a84e" }}>{fp(profit)}+</div>
                 <div style={{ fontSize: 11, color: "#4b4540", marginTop: 4 }}>your profit</div>
               </div>
             </Reveal>
@@ -489,7 +440,7 @@ export default function Home() {
         <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", width: 600, height: 600, borderRadius: "50%", background: "radial-gradient(circle, rgba(255,255,255,0.06) 0%, transparent 70%)", pointerEvents: "none" }}></div>
         <Reveal>
           <h2 style={{ fontFamily: "'Fraunces', serif", fontSize: "clamp(28px,4vw,56px)", fontWeight: 900, color: "white", lineHeight: 1.1, marginBottom: 20 }}>
-            Will You Create the Next<br /><em>Million {C.code === "PHP" ? "Peso" : "Dollar"} Brand?</em>
+            Will You Create the Next<br /><em>Million Dollar Brand?</em>
           </h2>
           <p style={{ fontSize: 16, color: "rgba(255,255,255,0.8)", marginBottom: 36, maxWidth: 480, margin: "0 auto 36px" }}>
             Enter your email and we'll send you everything you need to launch your brand today.
@@ -503,7 +454,7 @@ export default function Home() {
               <button type="submit" className="btn-white">Launch My Brand →</button>
             </form>
           )}
-          <p style={{ fontSize: 12, color: "rgba(255,255,255,0.6)", marginTop: 16 }}>No credit card required · Cancel anytime · {fp(0, C)} upfront inventory</p>
+          <p style={{ fontSize: 12, color: "rgba(255,255,255,0.6)", marginTop: 16 }}>No credit card required · Cancel anytime · $0 upfront inventory</p>
         </Reveal>
       </section>
 
