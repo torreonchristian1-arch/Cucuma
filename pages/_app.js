@@ -1,73 +1,85 @@
-// pages/_app.js
 import { createContext, useContext, useState, useEffect } from "react";
 
 export const ThemeContext = createContext();
+export function useTheme() { return useContext(ThemeContext); }
 
-export function useTheme() {
-  return useContext(ThemeContext);
-}
-
-// ── Theme color tokens ────────────────────────────────────────────
 export const THEMES = {
   light: {
-    bg: "#faf9f7",
+    bg: "#f8f7f5",
     surface: "#ffffff",
-    surfaceAlt: "#faf9f7",
-    border: "#f0ebe3",
-    borderAlt: "#e8ddd0",
-    text: "#1a0e04",
-    textMuted: "#a09080",
-    textSub: "#6b5a4e",
-    gold: "#c9963a",
-    goldLight: "#fef3e2",
-    goldBorder: "#f3d098",
-    navActive: "#fef3e2",
-    navActiveBorder: "#f3d098",
-    navActiveText: "#c9963a",
-    navText: "#6b5a4e",
-    shadow: "0 2px 12px rgba(0,0,0,0.06)",
-    inputBg: "#faf9f7",
-    tagBg: "#f0fdf4",
-    tagText: "#16a34a",
-    tagBorder: "#bbf7d0",
+    surfaceAlt: "#f8f7f5",
+    surfaceHover: "#f3f0eb",
+    border: "#ebe6de",
+    text: "#1a1208",
+    textMuted: "#9a8878",
+    textSub: "#5a4a3a",
+    gold: "#b8862a",
+    goldBg: "#fff8ed",
+    goldBorder: "#f0d090",
+    goldText: "#b8862a",
+    navBg: "#ffffff",
+    navActive: "#fff8ed",
+    navActiveText: "#b8862a",
+    navText: "#7a6a5a",
+    inputBg: "#f8f7f5",
+    shadow: "0 1px 3px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.04)",
+    shadowMd: "0 4px 24px rgba(0,0,0,0.08)",
+    green: "#16a34a",
+    greenBg: "#f0fdf4",
+    greenBorder: "#bbf7d0",
+    orange: "#ea580c",
+    orangeBg: "#fff7ed",
+    orangeBorder: "#fed7aa",
+    blue: "#2563eb",
+    blueBg: "#eff6ff",
+    blueBorder: "#bfdbfe",
   },
   dark: {
-    bg: "#0d0f12",
-    surface: "#13151a",
-    surfaceAlt: "#0d0f12",
-    border: "#1e2128",
-    borderAlt: "#252830",
-    text: "#e8e0d4",
-    textMuted: "#6b6560",
+    bg: "#111010",
+    surface: "#1a1917",
+    surfaceAlt: "#111010",
+    surfaceHover: "#222018",
+    border: "#2a2720",
+    text: "#f0e8d8",
+    textMuted: "#7a6a5a",
     textSub: "#a09080",
-    gold: "#d4b68e",
-    goldLight: "rgba(212,182,142,0.1)",
-    goldBorder: "rgba(212,182,142,0.3)",
-    navActive: "rgba(212,182,142,0.1)",
-    navActiveBorder: "#d4b68e",
-    navActiveText: "#d4b68e",
-    navText: "#6b6560",
-    shadow: "0 2px 12px rgba(0,0,0,0.3)",
-    inputBg: "#0d0f12",
-    tagBg: "#0d2b1a",
-    tagText: "#4ade80",
-    tagBorder: "#166534",
+    gold: "#d4a84e",
+    goldBg: "rgba(212,168,78,0.1)",
+    goldBorder: "rgba(212,168,78,0.25)",
+    goldText: "#d4a84e",
+    navBg: "#1a1917",
+    navActive: "rgba(212,168,78,0.1)",
+    navActiveText: "#d4a84e",
+    navText: "#7a6a5a",
+    inputBg: "#111010",
+    shadow: "0 1px 3px rgba(0,0,0,0.3), 0 4px 16px rgba(0,0,0,0.2)",
+    shadowMd: "0 4px 24px rgba(0,0,0,0.3)",
+    green: "#4ade80",
+    greenBg: "#0d2b1a",
+    greenBorder: "#166534",
+    orange: "#fb923c",
+    orangeBg: "#1a0d00",
+    orangeBorder: "#9a3412",
+    blue: "#60a5fa",
+    blueBg: "#0d1a2b",
+    blueBorder: "#1e3a5f",
   }
 };
 
 export default function App({ Component, pageProps }) {
   const [mode, setMode] = useState("light");
 
-  // Load saved preference
   useEffect(() => {
-    const saved = localStorage.getItem("cucuma-theme");
-    if (saved) setMode(saved);
+    try {
+      const saved = localStorage.getItem("cucuma-theme");
+      if (saved === "dark" || saved === "light") setMode(saved);
+    } catch {}
   }, []);
 
   function toggleTheme() {
     const next = mode === "light" ? "dark" : "light";
     setMode(next);
-    localStorage.setItem("cucuma-theme", next);
+    try { localStorage.setItem("cucuma-theme", next); } catch {}
   }
 
   const theme = THEMES[mode];
@@ -75,12 +87,16 @@ export default function App({ Component, pageProps }) {
   return (
     <ThemeContext.Provider value={{ mode, theme, toggleTheme }}>
       <style global jsx>{`
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { background: ${theme.bg}; color: ${theme.text}; transition: background 0.2s, color 0.2s; }
-        ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-thumb { background: ${theme.border}; border-radius: 2px; }
-        input { outline: none; }
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=DM+Sans:wght@300;400;500;600&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,600;0,700;0,900;1,400;1,700&family=Manrope:wght@400;500;600;700&display=swap');
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html { -webkit-font-smoothing: antialiased; }
+        body { background: ${theme.bg}; color: ${theme.text}; font-family: 'Manrope', sans-serif; transition: background 0.25s, color 0.25s; }
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: ${theme.border}; border-radius: 10px; }
+        input, button, textarea { font-family: 'Manrope', sans-serif; }
+        input:focus, textarea:focus { outline: none; }
+        a { text-decoration: none; }
       `}</style>
       <Component {...pageProps} />
     </ThemeContext.Provider>
