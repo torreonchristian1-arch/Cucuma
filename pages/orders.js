@@ -8,36 +8,41 @@ export default function Orders() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   return (
-    <div style={{ display: "flex", height: "100vh", background: "#080a0c", color: "#e8e0d4", fontFamily: "sans-serif", overflow: "hidden" }}>
+    <div style={{ display: "flex", height: "100vh", background: "#faf9f7", fontFamily: "'DM Sans', sans-serif", overflow: "hidden" }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Cormorant+Garamond:wght@300;400&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@400;500;600&display=swap');
         * { box-sizing: border-box; margin: 0; padding: 0; }
+        @media (max-width: 768px) {
+          .page-header { padding: 12px 16px 12px 60px !important; }
+          .main-pad { padding: 16px !important; }
+          .webhook-grid { grid-template-columns: 1fr !important; }
+        }
       `}</style>
 
       <SideNav active="orders" shop={shop} open={sidebarOpen} onToggle={() => setSidebarOpen(!sidebarOpen)} />
 
       <main style={{ flex: 1, overflow: "auto" }}>
-        <header style={{ padding: "20px 32px", borderBottom: "1px solid #1a1c1f", background: "#080a0c", display: "flex", alignItems: "center", gap: 16 }}>
-          <button onClick={() => setSidebarOpen(!sidebarOpen)} style={{ background: "none", border: "1px solid #1a1c1f", borderRadius: 6, color: "#6b6560", cursor: "pointer", padding: "6px 8px", fontSize: 14 }}>☰</button>
-          <div>
-            <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, fontWeight: 300, color: "#e8e0d4" }}>Orders ⬡</div>
-            <div style={{ fontSize: 12, color: "#4b4540", marginTop: 2 }}>Track and manage your fulfillment orders</div>
-          </div>
+        <header className="page-header" style={{ padding: "16px 28px", background: "white", borderBottom: "1px solid #f0ebe3" }}>
+          <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 700, color: "#1a0e04" }}>Orders</div>
+          <div style={{ fontSize: 12, color: "#a09080", marginTop: 2 }}>Track and manage your fulfillment orders</div>
         </header>
 
-        <div style={{ padding: "60px 32px", textAlign: "center" }}>
-          <div style={{ fontSize: 64, marginBottom: 24, opacity: 0.15 }}>⬡</div>
-          <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 28, color: "#e8e0d4", marginBottom: 12 }}>Order Routing Coming Soon</div>
-          <div style={{ fontSize: 14, color: "#6b6560", maxWidth: 400, margin: "0 auto 32px", lineHeight: 1.7 }}>
-            Webhooks are registered and listening. The order routing dashboard is the next feature being built.
+        <div className="main-pad" style={{ padding: "28px", textAlign: "center" }}>
+          <div style={{ background: "white", border: "1px solid #f0ebe3", borderRadius: 16, padding: "48px 24px", marginBottom: 20 }}>
+            <div style={{ fontSize: 48, marginBottom: 16 }}>📦</div>
+            <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 24, fontWeight: 700, color: "#1a0e04", marginBottom: 8 }}>Order Routing Coming Soon</div>
+            <p style={{ fontSize: 14, color: "#a09080", maxWidth: 380, margin: "0 auto", lineHeight: 1.7 }}>
+              Webhooks are registered and listening. Your order routing dashboard is the next feature being built.
+            </p>
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, maxWidth: 600, margin: "0 auto" }}>
+
+          <div className="webhook-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12 }}>
             {["orders/create", "orders/fulfilled", "products/update"].map(event => (
-              <div key={event} style={{ background: "#0d0f12", border: "1px solid #1a1c1f", borderRadius: 12, padding: 16 }}>
-                <div style={{ fontSize: 11, color: "#6b6560", fontFamily: "monospace", marginBottom: 8 }}>{event}</div>
+              <div key={event} style={{ background: "white", border: "1px solid #f0ebe3", borderRadius: 12, padding: "16px" }}>
+                <div style={{ fontSize: 11, color: "#6b5a4e", fontFamily: "monospace", marginBottom: 8 }}>{event}</div>
                 <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                  <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#4ade80" }}></div>
-                  <span style={{ fontSize: 11, color: "#4ade80" }}>Listening</span>
+                  <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#10b981" }}></div>
+                  <span style={{ fontSize: 11, color: "#10b981", fontWeight: 600 }}>Listening</span>
                 </div>
               </div>
             ))}

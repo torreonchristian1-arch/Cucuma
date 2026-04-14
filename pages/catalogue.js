@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useRouter } from "next/router";
-import Link from "next/link";
+import SideNav from "../components/SideNav";
 
 const CATALOGUE = {
   Skincare: [
@@ -29,15 +29,11 @@ const CATALOGUE = {
   ],
 };
 
-const ICONS = { Skincare: "◈", Cosmetics: "✦", Haircare: "◉" };
-const COLORS = { Skincare: "#d4b68e", Cosmetics: "#c084fc", Haircare: "#67e8f9" };
-const NAV = [
-  { id: "dashboard", label: "Dashboard", icon: "◈", href: "/dashboard" },
-  { id: "catalogue", label: "Catalogue", icon: "✦", href: "/catalogue" },
-  { id: "branding", label: "Branding", icon: "◉", href: "/branding" },
-  { id: "orders", label: "Orders", icon: "⬡", href: "/orders" },
-  { id: "settings", label: "Settings", icon: "⚙", href: "/settings" },
-];
+const BADGE_STYLE = {
+  Bestseller: { bg: "#fef3e2", color: "#c9963a" },
+  New: { bg: "#f0fdf4", color: "#16a34a" },
+  Popular: { bg: "#fdf4ff", color: "#9333ea" },
+};
 
 export default function Catalogue() {
   const router = useRouter();
@@ -56,14 +52,11 @@ export default function Catalogue() {
 
   function showToast(message, url, type) {
     setToast({ message, url, type });
-    setTimeout(() => setToast(null), 6000);
+    setTimeout(() => setToast(null), 5000);
   }
 
   async function handlePublish(product) {
-    if (!shop) {
-      showToast("No store connected. Add ?shop=yourstore.myshopify.com to the URL.", null, "error");
-      return;
-    }
+    if (!shop) { showToast("No store connected.", null, "error"); return; }
     if (published[product.id] || publishing === product.id) return;
     setPublishing(product.id);
     try {
@@ -75,172 +68,135 @@ export default function Catalogue() {
       const data = await res.json();
       if (data.success) {
         setPublished(prev => ({ ...prev, [product.id]: data.shopifyProductUrl }));
-        showToast(product.name + " is now live in your store!", data.shopifyProductUrl, "success");
+        showToast(product.name + " published to your store!", data.shopifyProductUrl, "success");
       } else {
         showToast(data.error || "Failed to publish.", null, "error");
       }
-    } catch (err) {
+    } catch {
       showToast("Network error. Please try again.", null, "error");
     }
     setPublishing(null);
   }
 
   return (
-    <div style={{ display: "flex", height: "100vh", background: "#080a0c", color: "#e8e0d4", fontFamily: "sans-serif", overflow: "hidden" }}>
+    <div style={{ display: "flex", height: "100vh", background: "#faf9f7", fontFamily: "'DM Sans', sans-serif", overflow: "hidden" }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Cormorant+Garamond:wght@300;400&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@400;500;600&display=swap');
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'DM Sans', sans-serif; }
         ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-thumb { background: #2a2620; border-radius: 2px; }
-        .pcard { transition: transform 0.2s; }
-        .pcard:hover { transform: translateY(-3px); }
+        ::-webkit-scrollbar-thumb { background: #e8ddd0; border-radius: 2px; }
+        .pcard { transition: transform 0.2s, box-shadow 0.2s; }
+        .pcard:hover { transform: translateY(-3px); box-shadow: 0 12px 32px rgba(0,0,0,0.08); }
         input { outline: none; }
         @keyframes spin { to { transform: rotate(360deg); } }
-        @keyframes slideIn { from { transform: translateY(80px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        @keyframes slideIn { from { transform: translateY(60px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         .toast { animation: slideIn 0.3s ease; }
+
+        @media (max-width: 768px) {
+          .cat-grid { grid-template-columns: 1fr 1fr !important; }
+          .products-grid { grid-template-columns: 1fr 1fr !important; }
+          .page-header { padding: 12px 16px 12px 60px !important; }
+          .main-pad { padding: 16px !important; }
+          .stats-bar { display: none !important; }
+          .search-input { width: 160px !important; }
+        }
+        @media (max-width: 480px) {
+          .products-grid { grid-template-columns: 1fr !important; }
+          .cat-grid { grid-template-columns: 1fr 1fr 1fr !important; }
+        }
       `}</style>
 
-      {/* TOAST */}
+      {/* Toast */}
       {toast && (
-        <div className="toast" style={{
-          position: "fixed", bottom: 28, right: 28, zIndex: 999,
-          background: toast.type === "success" ? "#0d2b1a" : "#2b0d0d",
-          border: "1px solid " + (toast.type === "success" ? "#4ade80" : "#f87171"),
-          borderRadius: 12, padding: "14px 18px", maxWidth: 360,
-          boxShadow: "0 16px 48px rgba(0,0,0,0.5)",
-        }}>
-          <p style={{ fontSize: 13, color: toast.type === "success" ? "#4ade80" : "#f87171", fontWeight: 500, marginBottom: toast.url ? 10 : 0 }}>
+        <div className="toast" style={{ position: "fixed", bottom: 24, right: 24, zIndex: 1000, background: toast.type === "success" ? "white" : "#fff5f5", border: `1px solid ${toast.type === "success" ? "#bbf7d0" : "#fecaca"}`, borderRadius: 12, padding: "14px 18px", maxWidth: 340, boxShadow: "0 8px 32px rgba(0,0,0,0.12)" }}>
+          <p style={{ fontSize: 13, color: toast.type === "success" ? "#16a34a" : "#dc2626", fontWeight: 500, marginBottom: toast.url ? 8 : 0 }}>
             {toast.type === "success" ? "✓ " : "✗ "}{toast.message}
           </p>
-          {toast.url && (
-            <a href={toast.url} target="_blank" rel="noreferrer"
-              style={{ fontSize: 12, color: "#d4b68e", textDecoration: "none", background: "rgba(212,182,142,0.1)", borderRadius: 6, padding: "5px 10px", display: "inline-block" }}>
-              View in Shopify →
-            </a>
-          )}
+          {toast.url && <a href={toast.url} target="_blank" rel="noreferrer" style={{ fontSize: 12, color: "#c9963a", textDecoration: "none", fontWeight: 600 }}>View in Shopify →</a>}
         </div>
       )}
 
-      {/* SIDEBAR */}
-      <aside style={{ width: sidebarOpen ? 240 : 64, background: "#0d0f12", borderRight: "1px solid #1a1c1f", display: "flex", flexDirection: "column", transition: "width 0.3s", overflow: "hidden", flexShrink: 0 }}>
-        <div style={{ padding: "24px 20px", borderBottom: "1px solid #1a1c1f", display: "flex", alignItems: "center", gap: 12 }}>
-          <div style={{ width: 36, height: 36, borderRadius: "50%", background: "linear-gradient(135deg, #d4b68e, #a07850)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, flexShrink: 0 }}>✦</div>
-          {sidebarOpen && (
-            <div>
-              <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 20, color: "#e8e0d4" }}>Cucuma</div>
-              <div style={{ fontSize: 10, color: "#6b6560", letterSpacing: "0.15em", textTransform: "uppercase" }}>Private Label</div>
-            </div>
-          )}
-        </div>
-        <nav style={{ flex: 1, padding: "16px 10px" }}>
-          {NAV.map(item => (
-            <Link key={item.id} href={item.href + "?shop=" + (shop || "")} style={{ textDecoration: "none" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "11px 12px", borderRadius: 8, marginBottom: 4, borderLeft: item.id === "catalogue" ? "2px solid #d4b68e" : "2px solid transparent", background: item.id === "catalogue" ? "rgba(212,182,142,0.1)" : "transparent", color: item.id === "catalogue" ? "#d4b68e" : "#6b6560", cursor: "pointer" }}>
-                <span style={{ fontSize: 16, width: 20, textAlign: "center", flexShrink: 0 }}>{item.icon}</span>
-                {sidebarOpen && <span style={{ fontSize: 13.5, fontWeight: 500 }}>{item.label}</span>}
-              </div>
-            </Link>
-          ))}
-        </nav>
-        {sidebarOpen && (
-          <div style={{ padding: 16, borderTop: "1px solid #1a1c1f" }}>
-            <div style={{ background: "#13151a", borderRadius: 10, padding: "12px 14px" }}>
-              <div style={{ fontSize: 10, color: "#6b6560", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 6 }}>Connected Store</div>
-              <div style={{ fontSize: 12, color: "#a09080", wordBreak: "break-all" }}>{shop || "No store"}</div>
-              <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 8 }}>
-                <div style={{ width: 6, height: 6, borderRadius: "50%", background: shop ? "#4ade80" : "#f87171" }}></div>
-                <span style={{ fontSize: 11, color: shop ? "#4ade80" : "#f87171" }}>{shop ? "Active" : "Not connected"}</span>
-              </div>
-            </div>
-          </div>
-        )}
-      </aside>
+      <SideNav active="catalogue" shop={shop} open={sidebarOpen} onToggle={() => setSidebarOpen(!sidebarOpen)} />
 
-      {/* MAIN */}
       <main style={{ flex: 1, overflow: "auto" }}>
         {/* Header */}
-        <header style={{ padding: "20px 32px", borderBottom: "1px solid #1a1c1f", display: "flex", alignItems: "center", justifyContent: "space-between", background: "#080a0c", position: "sticky", top: 0, zIndex: 10 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-            <button onClick={() => setSidebarOpen(!sidebarOpen)} style={{ background: "none", border: "1px solid #1a1c1f", borderRadius: 6, color: "#6b6560", cursor: "pointer", padding: "6px 8px", fontSize: 14 }}>☰</button>
+        <header className="page-header" style={{ padding: "16px 28px", background: "white", borderBottom: "1px solid #f0ebe3", display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 10 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
             <div>
-              <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, fontWeight: 300, color: "#e8e0d4" }}>Product Catalogue ✦</div>
-              <div style={{ fontSize: 12, color: "#4b4540", marginTop: 2 }}>Publish private label products to your Shopify store</div>
+              <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 700, color: "#1a0e04" }}>Product Catalogue</div>
+              <div style={{ fontSize: 12, color: "#a09080" }}>Publish products to your store</div>
             </div>
           </div>
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search products..."
-            style={{ background: "#0d0f12", border: "1px solid #1a1c1f", borderRadius: 8, padding: "9px 16px", color: "#e8e0d4", fontSize: 13, width: 220 }} />
+          <input className="search-input" value={search} onChange={e => setSearch(e.target.value)} placeholder="Search..."
+            style={{ background: "#faf9f7", border: "1px solid #f0ebe3", borderRadius: 10, padding: "8px 14px", color: "#3a2a1a", fontSize: 13, width: 200 }} />
         </header>
 
-        <div style={{ padding: "24px 32px" }}>
+        <div className="main-pad" style={{ padding: "20px 28px" }}>
           {/* Stats */}
-          <div style={{ display: "flex", gap: 14, marginBottom: 24 }}>
+          <div className="stats-bar" style={{ display: "flex", gap: 12, marginBottom: 20 }}>
             {Object.entries(CATALOGUE).map(([cat, prods]) => (
-              <div key={cat} style={{ background: "#0d0f12", border: "1px solid #1a1c1f", borderRadius: 12, padding: "12px 18px", display: "flex", alignItems: "center", gap: 10 }}>
-                <span style={{ color: COLORS[cat] }}>{ICONS[cat]}</span>
+              <div key={cat} style={{ background: "white", border: "1px solid #f0ebe3", borderRadius: 12, padding: "12px 16px", display: "flex", alignItems: "center", gap: 10 }}>
+                <div style={{ fontSize: 14, color: cat === "Skincare" ? "#c9963a" : cat === "Cosmetics" ? "#9333ea" : "#0ea5e9" }}>
+                  {cat === "Skincare" ? "◈" : cat === "Cosmetics" ? "✦" : "◉"}
+                </div>
                 <div>
-                  <div style={{ fontSize: 10, color: "#4b4540", textTransform: "uppercase" }}>{cat}</div>
-                  <div style={{ fontSize: 18, color: "#e8e0d4" }}>{prods.length} <span style={{ fontSize: 11, color: "#6b6560" }}>products</span></div>
+                  <div style={{ fontSize: 10, color: "#a09080", textTransform: "uppercase", letterSpacing: "0.06em" }}>{cat}</div>
+                  <div style={{ fontSize: 18, fontWeight: 700, color: "#1a0e04" }}>{prods.length}</div>
                 </div>
               </div>
             ))}
-            <div style={{ background: "#0d0f12", border: "1px solid #1a1c1f", borderRadius: 12, padding: "12px 18px", marginLeft: "auto" }}>
-              <div style={{ fontSize: 10, color: "#4b4540", textTransform: "uppercase" }}>Published</div>
-              <div style={{ fontSize: 18, color: "#4ade80" }}>{Object.keys(published).length} <span style={{ fontSize: 11, color: "#6b6560" }}>products</span></div>
+            <div style={{ background: "white", border: "1px solid #f0ebe3", borderRadius: 12, padding: "12px 16px", marginLeft: "auto" }}>
+              <div style={{ fontSize: 10, color: "#a09080", textTransform: "uppercase", letterSpacing: "0.06em" }}>Published</div>
+              <div style={{ fontSize: 18, fontWeight: 700, color: "#16a34a" }}>{Object.keys(published).length}</div>
             </div>
           </div>
 
-          {/* Tabs */}
-          <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
+          {/* Category Tabs */}
+          <div className="cat-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8, marginBottom: 20 }}>
             {Object.keys(CATALOGUE).map(cat => (
               <button key={cat} onClick={() => { setActiveCat(cat); setSearch(""); }}
-                style={{ background: activeCat === cat ? "rgba(212,182,142,0.1)" : "transparent", border: activeCat === cat ? "1px solid " + COLORS[cat] : "1px solid #1a1c1f", borderRadius: 10, padding: "9px 20px", color: activeCat === cat ? COLORS[cat] : "#6b6560", fontSize: 13, fontWeight: 500, cursor: "pointer" }}>
-                {ICONS[cat]} {cat} <span style={{ background: "#1a1c1f", borderRadius: 20, padding: "1px 7px", fontSize: 11, color: "#6b6560", marginLeft: 4 }}>{CATALOGUE[cat].length}</span>
+                style={{ background: activeCat === cat ? "#fef3e2" : "white", border: activeCat === cat ? "1px solid #f3d098" : "1px solid #f0ebe3", borderRadius: 10, padding: "10px 14px", color: activeCat === cat ? "#c9963a" : "#6b5a4e", fontSize: 13, fontWeight: activeCat === cat ? 600 : 400, cursor: "pointer", textAlign: "center" }}>
+                {cat}
               </button>
             ))}
           </div>
 
-          {/* Grid */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
+          {/* Products Grid */}
+          <div className="products-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 14 }}>
             {filtered.map(product => {
               const isPub = published[product.id];
               const isPubbing = publishing === product.id;
+              const badge = product.badge ? BADGE_STYLE[product.badge] : null;
               return (
-                <div key={product.id} className="pcard" style={{ background: "#0d0f12", border: "1px solid " + (isPub ? "#1a3a20" : "#1a1c1f"), borderRadius: 14, overflow: "hidden" }}>
-                  <div style={{ height: 150, background: "linear-gradient(135deg, #111316, #1a1c1f)", display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
-                    <span style={{ fontSize: 44, opacity: 0.12 }}>{ICONS[activeCat]}</span>
-                    {product.badge && (
-                      <span style={{ position: "absolute", top: 12, right: 12, background: product.badge === "Bestseller" ? "#d4b68e" : product.badge === "New" ? "#4ade80" : "#c084fc", color: "#0d0f12", borderRadius: 6, padding: "3px 9px", fontSize: 10, fontWeight: 700 }}>{product.badge}</span>
-                    )}
+                <div key={product.id} className="pcard" style={{ background: "white", border: `1px solid ${isPub ? "#bbf7d0" : "#f0ebe3"}`, borderRadius: 14, overflow: "hidden" }}>
+                  <div style={{ height: 140, background: "linear-gradient(135deg, #faf6f0, #f0ebe3)", display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
+                    <span style={{ fontSize: 40, opacity: 0.2, color: "#c9963a" }}>✦</span>
+                    {badge && <span style={{ position: "absolute", top: 10, right: 10, background: badge.bg, color: badge.color, fontSize: 10, fontWeight: 700, padding: "3px 10px", borderRadius: 100 }}>{product.badge}</span>}
                     {isPub && (
-                      <div style={{ position: "absolute", inset: 0, background: "rgba(13,43,26,0.85)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 4 }}>
-                        <span style={{ fontSize: 26, color: "#4ade80" }}>✓</span>
-                        <span style={{ fontSize: 11, color: "#4ade80", fontWeight: 600 }}>Live in Store</span>
+                      <div style={{ position: "absolute", inset: 0, background: "rgba(240,253,244,0.9)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 4 }}>
+                        <span style={{ fontSize: 24, color: "#16a34a" }}>✓</span>
+                        <span style={{ fontSize: 11, color: "#16a34a", fontWeight: 600 }}>Live in Store</span>
                       </div>
                     )}
                   </div>
                   <div style={{ padding: "14px 16px" }}>
-                    <div style={{ fontSize: 14, fontWeight: 600, color: "#e8e0d4", marginBottom: 5 }}>{product.name}</div>
-                    <div style={{ fontSize: 12, color: "#6b6560", marginBottom: 12, lineHeight: 1.5 }}>{product.desc}</div>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: "#1a0e04", marginBottom: 4 }}>{product.name}</div>
+                    <div style={{ fontSize: 12, color: "#a09080", marginBottom: 12, lineHeight: 1.5 }}>{product.desc}</div>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
                       <div>
-                        <div style={{ fontSize: 18, color: "#e8e0d4" }}>₱{product.price}</div>
-                        <div style={{ fontSize: 10, color: "#4b4540" }}>MOQ: {product.moq} units</div>
+                        <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 700, color: "#1a0e04" }}>₱{product.price}</div>
+                        <div style={{ fontSize: 10, color: "#a09080" }}>MOQ: {product.moq} units</div>
                       </div>
-                      <span style={{ fontSize: 10, color: COLORS[activeCat], background: "rgba(212,182,142,0.08)", borderRadius: 6, padding: "3px 9px" }}>{activeCat}</span>
                     </div>
                     {isPub ? (
                       <div style={{ display: "flex", gap: 8 }}>
-                        <div style={{ flex: 1, background: "#0d2b1a", border: "1px solid #4ade80", borderRadius: 8, padding: "9px", textAlign: "center", fontSize: 12, color: "#4ade80", fontWeight: 600 }}>✓ Published</div>
-                        <a href={isPub} target="_blank" rel="noreferrer" style={{ background: "#1a1c1f", border: "1px solid #2a2620", borderRadius: 8, padding: "9px 12px", fontSize: 12, color: "#d4b68e", textDecoration: "none" }}>View →</a>
+                        <div style={{ flex: 1, background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 8, padding: "8px", textAlign: "center", fontSize: 12, color: "#16a34a", fontWeight: 600 }}>✓ Published</div>
+                        <a href={isPub} target="_blank" rel="noreferrer" style={{ background: "#fef3e2", border: "1px solid #f3d098", borderRadius: 8, padding: "8px 12px", fontSize: 12, color: "#c9963a", textDecoration: "none", fontWeight: 600 }}>View →</a>
                       </div>
                     ) : (
                       <button onClick={() => handlePublish(product)} disabled={isPubbing}
-                        style={{ width: "100%", borderRadius: 8, padding: "10px", background: isPubbing ? "#1a1c1f" : "#d4b68e", border: isPubbing ? "1px solid #2a2620" : "none", color: isPubbing ? "#6b6560" : "#1a0e04", fontSize: 13, fontWeight: 600, cursor: isPubbing ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-                        {isPubbing
-                          ? <><span style={{ width: 12, height: 12, border: "2px solid #6b6560", borderTopColor: "#d4b68e", borderRadius: "50%", display: "inline-block", animation: "spin 0.8s linear infinite" }}></span>Publishing...</>
-                          : "🚀 Publish to Store"
-                        }
+                        style={{ width: "100%", borderRadius: 8, padding: "9px", background: isPubbing ? "#faf9f7" : "linear-gradient(135deg, #c9963a, #a07020)", border: isPubbing ? "1px solid #f0ebe3" : "none", color: isPubbing ? "#a09080" : "white", fontSize: 13, fontWeight: 600, cursor: isPubbing ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
+                        {isPubbing ? <><span style={{ width: 12, height: 12, border: "2px solid #e8ddd0", borderTopColor: "#c9963a", borderRadius: "50%", display: "inline-block", animation: "spin 0.8s linear infinite" }}></span>Publishing...</> : "🚀 Publish to Store"}
                       </button>
                     )}
                   </div>
@@ -250,9 +206,9 @@ export default function Catalogue() {
           </div>
 
           {filtered.length === 0 && (
-            <div style={{ textAlign: "center", padding: "60px 0", color: "#4b4540" }}>
-              <div style={{ fontSize: 40, marginBottom: 12 }}>◈</div>
-              <div style={{ fontSize: 18 }}>No products found</div>
+            <div style={{ textAlign: "center", padding: "48px 0", color: "#a09080" }}>
+              <div style={{ fontSize: 36, marginBottom: 12 }}>✦</div>
+              <div style={{ fontSize: 16, fontWeight: 500 }}>No products found</div>
             </div>
           )}
         </div>
