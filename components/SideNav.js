@@ -1,6 +1,7 @@
 // components/SideNav.js
 import { useState } from "react";
 import { useRouter } from "next/router";
+import { useTheme } from "../pages/_app";
 
 const NAV = [
   { id: "dashboard", label: "Dashboard", icon: "⊞", href: "/dashboard" },
@@ -12,6 +13,7 @@ const NAV = [
 
 export default function SideNav({ active, shop, open, onToggle }) {
   const router = useRouter();
+  const { mode, theme, toggleTheme } = useTheme();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   function goTo(href) {
@@ -19,119 +21,112 @@ export default function SideNav({ active, shop, open, onToggle }) {
     setMobileOpen(false);
   }
 
-  const navContent = (
+  const sidebarContent = (full = true) => (
     <>
       {/* Logo */}
-      <div style={{ padding: "20px 16px", borderBottom: "1px solid #f0ebe3", display: "flex", alignItems: "center", gap: 12 }}>
+      <div style={{ padding: "20px 16px", borderBottom: `1px solid ${theme.border}`, display: "flex", alignItems: "center", gap: 12 }}>
         <div style={{ width: 40, height: 40, borderRadius: 12, background: "linear-gradient(135deg, #c9963a, #a07020)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0, color: "white" }}>✦</div>
-        <div>
-          <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, fontWeight: 700, color: "#1a0e04" }}>Cucuma<span style={{ color: "#c9963a" }}>®</span></div>
-          <div style={{ fontSize: 10, color: "#a09080", letterSpacing: "0.12em", textTransform: "uppercase" }}>Private Label</div>
-        </div>
+        {full && (
+          <div>
+            <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, fontWeight: 700, color: theme.text }}>Cucuma<span style={{ color: theme.gold }}>®</span></div>
+            <div style={{ fontSize: 10, color: theme.textMuted, letterSpacing: "0.12em", textTransform: "uppercase" }}>Private Label</div>
+          </div>
+        )}
       </div>
 
-      {/* Nav Items */}
+      {/* Nav */}
       <nav style={{ flex: 1, padding: "12px" }}>
+        {full && <div style={{ fontSize: 10, fontWeight: 700, color: theme.textMuted, letterSpacing: "0.1em", textTransform: "uppercase", padding: "0 8px", marginBottom: 8 }}>Menu</div>}
         {NAV.map(item => (
-          <div key={item.id}
-            onClick={() => goTo(item.href)}
+          <div key={item.id} onClick={() => goTo(item.href)}
             style={{
               display: "flex", alignItems: "center", gap: 12,
-              padding: "11px 14px", borderRadius: 10, marginBottom: 2,
-              background: item.id === active ? "#fef3e2" : "transparent",
-              color: item.id === active ? "#c9963a" : "#6b5a4e",
+              padding: "10px 12px", borderRadius: 10, marginBottom: 2,
+              background: item.id === active ? theme.navActive : "transparent",
+              color: item.id === active ? theme.navActiveText : theme.navText,
               cursor: "pointer", fontSize: 14,
               fontWeight: item.id === active ? 600 : 400,
+              transition: "all 0.15s",
             }}>
             <span style={{ fontSize: 16, width: 20, textAlign: "center", flexShrink: 0 }}>{item.icon}</span>
-            <span>{item.label}</span>
-            {item.id === active && <span style={{ marginLeft: "auto", width: 6, height: 6, borderRadius: "50%", background: "#c9963a" }}></span>}
+            {full && <span>{item.label}</span>}
+            {full && item.id === active && <span style={{ marginLeft: "auto", width: 6, height: 6, borderRadius: "50%", background: theme.gold }}></span>}
           </div>
         ))}
       </nav>
 
-      {/* Store Badge */}
-      <div style={{ padding: 12, borderTop: "1px solid #f0ebe3" }}>
-        <div style={{ background: "#faf9f7", borderRadius: 12, padding: "10px 12px", border: "1px solid #f0ebe3" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
-            <div style={{ width: 7, height: 7, borderRadius: "50%", background: shop ? "#16a34a" : "#f87171" }}></div>
-            <span style={{ fontSize: 10, fontWeight: 600, color: shop ? "#16a34a" : "#f87171" }}>{shop ? "Connected" : "Not connected"}</span>
+      {/* Theme Toggle + Store Badge */}
+      {full && (
+        <div style={{ padding: 12, borderTop: `1px solid ${theme.border}` }}>
+          {/* Dark/Light Toggle */}
+          <button onClick={toggleTheme} style={{
+            width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between",
+            background: theme.surfaceAlt, border: `1px solid ${theme.border}`,
+            borderRadius: 10, padding: "8px 12px", cursor: "pointer", marginBottom: 10,
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <span style={{ fontSize: 14 }}>{mode === "light" ? "☀️" : "🌙"}</span>
+              <span style={{ fontSize: 12, color: theme.textSub, fontWeight: 500 }}>{mode === "light" ? "Light Mode" : "Dark Mode"}</span>
+            </div>
+            {/* Toggle pill */}
+            <div style={{ width: 36, height: 20, background: mode === "dark" ? theme.gold : theme.border, borderRadius: 100, position: "relative", transition: "background 0.2s" }}>
+              <div style={{ position: "absolute", top: 2, left: mode === "dark" ? 18 : 2, width: 16, height: 16, background: "white", borderRadius: "50%", transition: "left 0.2s", boxShadow: "0 1px 4px rgba(0,0,0,0.2)" }}></div>
+            </div>
+          </button>
+
+          {/* Store badge */}
+          <div style={{ background: theme.surfaceAlt, borderRadius: 10, padding: "10px 12px", border: `1px solid ${theme.border}` }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
+              <div style={{ width: 7, height: 7, borderRadius: "50%", background: shop ? "#10b981" : "#f87171" }}></div>
+              <span style={{ fontSize: 10, fontWeight: 600, color: shop ? "#10b981" : "#f87171" }}>{shop ? "Connected" : "Not connected"}</span>
+            </div>
+            <div style={{ fontSize: 11, color: theme.textSub, wordBreak: "break-all" }}>{shop || "No store"}</div>
           </div>
-          <div style={{ fontSize: 11, color: "#6b5a4e", wordBreak: "break-all" }}>{shop || "No store"}</div>
         </div>
-      </div>
+      )}
     </>
   );
 
   return (
     <>
       <style>{`
+        .sidenav-item:hover { background: ${theme.goldLight} !important; }
         @media (max-width: 768px) {
           .desktop-sidebar { display: none !important; }
-          .mobile-menu-btn { display: flex !important; }
+          .mobile-fab { display: flex !important; }
         }
         @media (min-width: 769px) {
           .mobile-overlay { display: none !important; }
-          .mobile-menu-btn { display: none !important; }
+          .mobile-fab { display: none !important; }
         }
       `}</style>
 
       {/* Desktop Sidebar */}
       <aside className="desktop-sidebar" style={{
-        width: open ? 260 : 72,
-        background: "white",
-        borderRight: "1px solid #f0ebe3",
+        width: open ? 260 : 68,
+        background: theme.surface,
+        borderRight: `1px solid ${theme.border}`,
         display: "flex", flexDirection: "column",
         transition: "width 0.3s ease",
         overflow: "hidden", flexShrink: 0,
-        boxShadow: "2px 0 12px rgba(0,0,0,0.04)",
+        boxShadow: theme.shadow,
       }}>
-        <div style={{ padding: "20px 16px", borderBottom: "1px solid #f0ebe3", display: "flex", alignItems: "center", gap: 12 }}>
-          <div style={{ width: 40, height: 40, borderRadius: 12, background: "linear-gradient(135deg, #c9963a, #a07020)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0, color: "white" }}>✦</div>
-          {open && (
-            <div>
-              <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, fontWeight: 700, color: "#1a0e04" }}>Cucuma<span style={{ color: "#c9963a" }}>®</span></div>
-              <div style={{ fontSize: 10, color: "#a09080", letterSpacing: "0.12em", textTransform: "uppercase" }}>Private Label</div>
-            </div>
-          )}
-        </div>
-        <nav style={{ flex: 1, padding: "12px" }}>
-          {NAV.map(item => (
-            <div key={item.id} onClick={() => goTo(item.href)}
-              style={{ display: "flex", alignItems: "center", gap: 12, padding: "11px 14px", borderRadius: 10, marginBottom: 2, background: item.id === active ? "#fef3e2" : "transparent", color: item.id === active ? "#c9963a" : "#6b5a4e", cursor: "pointer", fontSize: 14, fontWeight: item.id === active ? 600 : 400 }}>
-              <span style={{ fontSize: 16, width: 20, textAlign: "center", flexShrink: 0 }}>{item.icon}</span>
-              {open && <span>{item.label}</span>}
-              {open && item.id === active && <span style={{ marginLeft: "auto", width: 6, height: 6, borderRadius: "50%", background: "#c9963a" }}></span>}
-            </div>
-          ))}
-        </nav>
-        {open && (
-          <div style={{ padding: 12, borderTop: "1px solid #f0ebe3" }}>
-            <div style={{ background: "#faf9f7", borderRadius: 12, padding: "10px 12px", border: "1px solid #f0ebe3" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
-                <div style={{ width: 7, height: 7, borderRadius: "50%", background: shop ? "#16a34a" : "#f87171" }}></div>
-                <span style={{ fontSize: 10, fontWeight: 600, color: shop ? "#16a34a" : "#f87171" }}>{shop ? "Connected" : "Not connected"}</span>
-              </div>
-              <div style={{ fontSize: 11, color: "#6b5a4e", wordBreak: "break-all" }}>{shop || "No store"}</div>
-            </div>
-          </div>
-        )}
+        {sidebarContent(open)}
       </aside>
 
-      {/* Mobile Menu Button */}
-      <button className="mobile-menu-btn"
-        onClick={() => setMobileOpen(true)}
-        style={{ display: "none", position: "fixed", top: 16, left: 16, zIndex: 200, background: "white", border: "1px solid #f0ebe3", borderRadius: 10, padding: "8px 12px", fontSize: 18, cursor: "pointer", boxShadow: "0 2px 8px rgba(0,0,0,0.1)", alignItems: "center", justifyContent: "center" }}>
+      {/* Mobile FAB */}
+      <button className="mobile-fab" onClick={() => setMobileOpen(true)}
+        style={{ display: "none", position: "fixed", top: 14, left: 14, zIndex: 200, background: theme.surface, border: `1px solid ${theme.border}`, borderRadius: 10, padding: "8px 12px", fontSize: 18, cursor: "pointer", boxShadow: theme.shadow, alignItems: "center", justifyContent: "center", color: theme.textSub }}>
         ☰
       </button>
 
       {/* Mobile Overlay */}
       {mobileOpen && (
         <div className="mobile-overlay" style={{ position: "fixed", inset: 0, zIndex: 300, display: "flex" }}>
-          <div style={{ background: "rgba(0,0,0,0.4)", position: "absolute", inset: 0 }} onClick={() => setMobileOpen(false)} />
-          <div style={{ width: 280, background: "white", height: "100%", display: "flex", flexDirection: "column", position: "relative", zIndex: 1, boxShadow: "4px 0 24px rgba(0,0,0,0.15)" }}>
-            <button onClick={() => setMobileOpen(false)} style={{ position: "absolute", top: 16, right: 16, background: "none", border: "none", fontSize: 20, cursor: "pointer", color: "#6b5a4e" }}>✕</button>
-            {navContent}
+          <div style={{ background: "rgba(0,0,0,0.5)", position: "absolute", inset: 0 }} onClick={() => setMobileOpen(false)} />
+          <div style={{ width: 280, background: theme.surface, height: "100%", display: "flex", flexDirection: "column", position: "relative", zIndex: 1, boxShadow: "4px 0 24px rgba(0,0,0,0.2)" }}>
+            <button onClick={() => setMobileOpen(false)} style={{ position: "absolute", top: 14, right: 14, background: "none", border: "none", fontSize: 20, cursor: "pointer", color: theme.textSub }}>✕</button>
+            {sidebarContent(true)}
           </div>
         </div>
       )}

@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/router";
 import { createClient } from "@supabase/supabase-js";
 import SideNav from "../components/SideNav";
+import { useTheme } from "./_app";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -22,6 +23,7 @@ const LABEL_STYLES = ["Modern", "Classic", "Minimal", "Bold"];
 export default function Branding() {
   const router = useRouter();
   const { shop } = router.query;
+  const { theme, mode } = useTheme();
   const fileInputRef = useRef(null);
 
   const [brandName, setBrandName] = useState("Your Brand");
@@ -41,7 +43,7 @@ export default function Branding() {
 
   useEffect(() => {
     if (!shop) return;
-    async function loadBranding() {
+    async function load() {
       const { data } = await supabase.from("branding").select("*").eq("shop_domain", shop).single();
       if (data) {
         setBrandName(data.brand_name || "Your Brand");
@@ -54,7 +56,7 @@ export default function Branding() {
         setLogoUrl(data.logo_url || null);
       }
     }
-    loadBranding();
+    load();
   }, [shop]);
 
   function handleFileSelect(file) {
@@ -65,17 +67,11 @@ export default function Branding() {
     reader.readAsDataURL(file);
   }
 
-  function handleDrop(e) {
-    e.preventDefault();
-    setDragOver(false);
-    handleFileSelect(e.dataTransfer.files[0]);
-  }
-
-  function applyPalette(palette) {
-    setPrimaryColor(palette.primary);
-    setSecondaryColor(palette.secondary);
-    setAccentColor(palette.accent);
-    setBgColor(palette.bg);
+  function applyPalette(p) {
+    setPrimaryColor(p.primary);
+    setSecondaryColor(p.secondary);
+    setAccentColor(p.accent);
+    setBgColor(p.bg);
   }
 
   async function handleSave() {
@@ -90,38 +86,27 @@ export default function Branding() {
         finalLogoUrl = urlData.publicUrl;
       }
     }
-    const { error } = await supabase.from("branding").upsert({
-      shop_domain: shop, brand_name: brandName, tagline,
-      primary_color: primaryColor, secondary_color: secondaryColor,
-      accent_color: accentColor, bg_color: bgColor,
-      label_style: labelStyle, logo_url: finalLogoUrl,
-      updated_at: new Date().toISOString(),
-    }, { onConflict: "shop_domain" });
+    await supabase.from("branding").upsert({ shop_domain: shop, brand_name: brandName, tagline, primary_color: primaryColor, secondary_color: secondaryColor, accent_color: accentColor, bg_color: bgColor, label_style: labelStyle, logo_url: finalLogoUrl, updated_at: new Date().toISOString() }, { onConflict: "shop_domain" });
     setSaving(false);
-    if (!error) { setSaved(true); setTimeout(() => setSaved(false), 3000); }
+    setSaved(true);
+    setTimeout(() => setSaved(false), 3000);
   }
 
   return (
-    <div style={{ display: "flex", height: "100vh", background: "#faf9f7", fontFamily: "'DM Sans', sans-serif", overflow: "hidden" }}>
+    <div style={{ display: "flex", height: "100vh", background: theme.bg, fontFamily: "'DM Sans', sans-serif", overflow: "hidden", transition: "background 0.2s" }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@400;500;600&display=swap');
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-thumb { background: #e8ddd0; border-radius: 2px; }
         input { outline: none; }
         input[type="color"] { cursor: pointer; border: none; background: none; padding: 0; }
-
         @media (max-width: 900px) {
           .branding-layout { grid-template-columns: 1fr !important; }
-          .preview-sticky { position: relative !important; top: 0 !important; }
-          .color-grid { grid-template-columns: 1fr 1fr !important; }
-          .style-grid { grid-template-columns: 1fr 1fr !important; }
-          .palette-grid { grid-template-columns: repeat(3, 1fr) !important; }
+          .preview-panel { position: relative !important; top: 0 !important; }
         }
         @media (max-width: 768px) {
           .page-header { padding: 12px 16px 12px 60px !important; flex-wrap: wrap; gap: 8px; }
-          .main-pad { padding: 16px !important; }
-          .tab-row { overflow-x: auto; }
+          .main-pad { padding: 16px !important; padding-top: 64px !important; }
+          .color-grid { grid-template-columns: 1fr 1fr !important; }
+          .style-grid { grid-template-columns: 1fr 1fr !important; }
+          .palette-grid { grid-template-columns: repeat(3, 1fr) !important; }
         }
         @media (max-width: 480px) {
           .color-grid { grid-template-columns: 1fr !important; }
@@ -132,123 +117,101 @@ export default function Branding() {
       <SideNav active="branding" shop={shop} open={sidebarOpen} onToggle={() => setSidebarOpen(!sidebarOpen)} />
 
       <main style={{ flex: 1, overflow: "auto" }}>
-        {/* Header */}
-        <header className="page-header" style={{ padding: "16px 28px", background: "white", borderBottom: "1px solid #f0ebe3", display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 10 }}>
+        <header className="page-header" style={{ padding: "14px 28px", background: theme.surface, borderBottom: `1px solid ${theme.border}`, display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 10, transition: "background 0.2s" }}>
           <div>
-            <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 700, color: "#1a0e04" }}>Brand Customisation</div>
-            <div style={{ fontSize: 12, color: "#a09080", marginTop: 2 }}>Design your private label identity</div>
+            <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 700, color: theme.text }}>Brand Customisation</div>
+            <div style={{ fontSize: 12, color: theme.textMuted, marginTop: 2 }}>Design your private label identity</div>
           </div>
-          <button onClick={handleSave} disabled={saving} style={{ background: saved ? "#f0fdf4" : "linear-gradient(135deg, #c9963a, #a07020)", border: saved ? "1px solid #bbf7d0" : "none", borderRadius: 10, padding: "9px 20px", color: saved ? "#16a34a" : "white", fontSize: 13, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" }}>
+          <button onClick={handleSave} disabled={saving} style={{ background: saved ? theme.tagBg : "linear-gradient(135deg, #c9963a, #a07020)", border: saved ? `1px solid ${theme.tagBorder}` : "none", borderRadius: 10, padding: "8px 18px", color: saved ? theme.tagText : "white", fontSize: 13, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" }}>
             {saving ? "Saving..." : saved ? "✓ Saved!" : "Save Branding"}
           </button>
         </header>
 
         <div className="main-pad" style={{ padding: "20px 28px" }}>
-          <div className="branding-layout" style={{ display: "grid", gridTemplateColumns: "1fr 360px", gap: 20 }}>
+          <div className="branding-layout" style={{ display: "grid", gridTemplateColumns: "1fr 340px", gap: 18 }}>
 
-            {/* LEFT EDITOR */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-
+            {/* LEFT */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
               {/* Tabs */}
-              <div className="tab-row" style={{ display: "flex", gap: 8 }}>
+              <div style={{ display: "flex", gap: 8, overflowX: "auto" }}>
                 {[{ id: "identity", label: "Identity" }, { id: "colors", label: "Colors" }, { id: "style", label: "Label Style" }].map(tab => (
-                  <button key={tab.id} onClick={() => setActiveTab(tab.id)} style={{
-                    background: activeTab === tab.id ? "#fef3e2" : "white",
-                    border: activeTab === tab.id ? "1px solid #f3d098" : "1px solid #f0ebe3",
-                    borderRadius: 10, padding: "9px 18px",
-                    color: activeTab === tab.id ? "#c9963a" : "#6b5a4e",
-                    fontSize: 13, fontWeight: activeTab === tab.id ? 600 : 400,
-                    cursor: "pointer", whiteSpace: "nowrap",
-                  }}>{tab.label}</button>
+                  <button key={tab.id} onClick={() => setActiveTab(tab.id)} style={{ background: activeTab === tab.id ? theme.goldLight : theme.surface, border: activeTab === tab.id ? `1px solid ${theme.goldBorder}` : `1px solid ${theme.border}`, borderRadius: 10, padding: "8px 16px", color: activeTab === tab.id ? theme.gold : theme.textSub, fontSize: 13, fontWeight: activeTab === tab.id ? 600 : 400, cursor: "pointer", whiteSpace: "nowrap", transition: "background 0.2s" }}>
+                    {tab.label}
+                  </button>
                 ))}
               </div>
 
-              {/* IDENTITY TAB */}
+              {/* IDENTITY */}
               {activeTab === "identity" && (
                 <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-                  {/* Logo Upload */}
-                  <div style={{ background: "white", border: "1px solid #f0ebe3", borderRadius: 14, padding: 20 }}>
-                    <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 15, fontWeight: 700, color: "#1a0e04", marginBottom: 14 }}>Logo Upload</div>
+                  <div style={{ background: theme.surface, border: `1px solid ${theme.border}`, borderRadius: 14, padding: 20, transition: "background 0.2s" }}>
+                    <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 15, fontWeight: 700, color: theme.text, marginBottom: 14 }}>Logo Upload</div>
                     <div
-                      onDrop={handleDrop}
+                      onDrop={(e) => { e.preventDefault(); setDragOver(false); handleFileSelect(e.dataTransfer.files[0]); }}
                       onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
                       onDragLeave={() => setDragOver(false)}
                       onClick={() => fileInputRef.current?.click()}
-                      style={{ border: `2px dashed ${dragOver ? "#c9963a" : "#f0ebe3"}`, borderRadius: 12, padding: "28px 20px", textAlign: "center", cursor: "pointer", background: dragOver ? "#fef9f0" : "#faf9f7", transition: "all 0.2s" }}
-                    >
+                      style={{ border: `2px dashed ${dragOver ? theme.gold : theme.border}`, borderRadius: 12, padding: "24px 20px", textAlign: "center", cursor: "pointer", background: dragOver ? theme.goldLight : theme.inputBg, transition: "all 0.2s" }}>
                       {logoUrl ? (
                         <div>
-                          <img src={logoUrl} alt="logo" style={{ maxHeight: 72, maxWidth: 180, objectFit: "contain", margin: "0 auto 10px", display: "block" }} />
-                          <div style={{ fontSize: 12, color: "#a09080" }}>Click to change logo</div>
+                          <img src={logoUrl} alt="logo" style={{ maxHeight: 68, maxWidth: 160, objectFit: "contain", margin: "0 auto 8px", display: "block" }} />
+                          <div style={{ fontSize: 12, color: theme.textMuted }}>Click to change</div>
                         </div>
                       ) : (
                         <div>
-                          <div style={{ fontSize: 32, marginBottom: 10 }}>⊕</div>
-                          <div style={{ fontSize: 14, color: "#6b5a4e", fontWeight: 500, marginBottom: 4 }}>Drop your logo here or click to upload</div>
-                          <div style={{ fontSize: 12, color: "#a09080" }}>PNG, JPG, SVG — max 2MB</div>
+                          <div style={{ fontSize: 28, marginBottom: 8, color: theme.textMuted }}>⊕</div>
+                          <div style={{ fontSize: 13, color: theme.textSub, fontWeight: 500, marginBottom: 4 }}>Drop your logo here or click to upload</div>
+                          <div style={{ fontSize: 11, color: theme.textMuted }}>PNG, JPG, SVG — max 2MB</div>
                         </div>
                       )}
                       <input ref={fileInputRef} type="file" accept="image/*" style={{ display: "none" }} onChange={(e) => handleFileSelect(e.target.files[0])} />
                     </div>
                   </div>
-
-                  {/* Brand Info */}
-                  <div style={{ background: "white", border: "1px solid #f0ebe3", borderRadius: 14, padding: 20 }}>
-                    <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 15, fontWeight: 700, color: "#1a0e04", marginBottom: 16 }}>Brand Identity</div>
-                    <div style={{ marginBottom: 14 }}>
-                      <label style={{ fontSize: 11, color: "#a09080", textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 8, fontWeight: 600 }}>Brand Name</label>
-                      <input value={brandName} onChange={e => setBrandName(e.target.value)} placeholder="Your Brand Name"
-                        style={{ width: "100%", background: "#faf9f7", border: "1px solid #f0ebe3", borderRadius: 8, padding: "10px 14px", color: "#1a0e04", fontSize: 14 }} />
+                  <div style={{ background: theme.surface, border: `1px solid ${theme.border}`, borderRadius: 14, padding: 20, transition: "background 0.2s" }}>
+                    <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 15, fontWeight: 700, color: theme.text, marginBottom: 14 }}>Brand Identity</div>
+                    <div style={{ marginBottom: 12 }}>
+                      <label style={{ fontSize: 11, color: theme.textMuted, textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 6, fontWeight: 600 }}>Brand Name</label>
+                      <input value={brandName} onChange={e => setBrandName(e.target.value)} style={{ width: "100%", background: theme.inputBg, border: `1px solid ${theme.border}`, borderRadius: 8, padding: "10px 14px", color: theme.text, fontSize: 14 }} />
                     </div>
                     <div>
-                      <label style={{ fontSize: 11, color: "#a09080", textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 8, fontWeight: 600 }}>Tagline</label>
-                      <input value={tagline} onChange={e => setTagline(e.target.value)} placeholder="Premium Beauty Collection"
-                        style={{ width: "100%", background: "#faf9f7", border: "1px solid #f0ebe3", borderRadius: 8, padding: "10px 14px", color: "#1a0e04", fontSize: 14 }} />
+                      <label style={{ fontSize: 11, color: theme.textMuted, textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 6, fontWeight: 600 }}>Tagline</label>
+                      <input value={tagline} onChange={e => setTagline(e.target.value)} style={{ width: "100%", background: theme.inputBg, border: `1px solid ${theme.border}`, borderRadius: 8, padding: "10px 14px", color: theme.text, fontSize: 14 }} />
                     </div>
                   </div>
                 </div>
               )}
 
-              {/* COLORS TAB */}
+              {/* COLORS */}
               {activeTab === "colors" && (
                 <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-                  <div style={{ background: "white", border: "1px solid #f0ebe3", borderRadius: 14, padding: 20 }}>
-                    <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 15, fontWeight: 700, color: "#1a0e04", marginBottom: 16 }}>Brand Colors</div>
-                    <div className="color-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
-                      {[
-                        { label: "Primary", value: primaryColor, setter: setPrimaryColor },
-                        { label: "Secondary", value: secondaryColor, setter: setSecondaryColor },
-                        { label: "Accent", value: accentColor, setter: setAccentColor },
-                        { label: "Background", value: bgColor, setter: setBgColor },
-                      ].map(({ label, value, setter }) => (
+                  <div style={{ background: theme.surface, border: `1px solid ${theme.border}`, borderRadius: 14, padding: 20, transition: "background 0.2s" }}>
+                    <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 15, fontWeight: 700, color: theme.text, marginBottom: 14 }}>Brand Colors</div>
+                    <div className="color-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                      {[{ label: "Primary", value: primaryColor, setter: setPrimaryColor }, { label: "Secondary", value: secondaryColor, setter: setSecondaryColor }, { label: "Accent", value: accentColor, setter: setAccentColor }, { label: "Background", value: bgColor, setter: setBgColor }].map(({ label, value, setter }) => (
                         <div key={label}>
-                          <label style={{ fontSize: 11, color: "#a09080", textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 8, fontWeight: 600 }}>{label}</label>
-                          <div style={{ display: "flex", alignItems: "center", gap: 10, background: "#faf9f7", border: "1px solid #f0ebe3", borderRadius: 8, padding: "8px 12px" }}>
-                            <div style={{ position: "relative", width: 30, height: 30, borderRadius: 6, overflow: "hidden", border: "1px solid #f0ebe3", flexShrink: 0 }}>
-                              <input type="color" value={value} onChange={e => setter(e.target.value)}
-                                style={{ position: "absolute", inset: "-4px", width: "calc(100% + 8px)", height: "calc(100% + 8px)" }} />
+                          <label style={{ fontSize: 11, color: theme.textMuted, textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 6, fontWeight: 600 }}>{label}</label>
+                          <div style={{ display: "flex", alignItems: "center", gap: 10, background: theme.inputBg, border: `1px solid ${theme.border}`, borderRadius: 8, padding: "7px 10px" }}>
+                            <div style={{ position: "relative", width: 28, height: 28, borderRadius: 6, overflow: "hidden", border: `1px solid ${theme.border}`, flexShrink: 0 }}>
+                              <input type="color" value={value} onChange={e => setter(e.target.value)} style={{ position: "absolute", inset: "-4px", width: "calc(100% + 8px)", height: "calc(100% + 8px)" }} />
                             </div>
-                            <input value={value} onChange={e => setter(e.target.value)}
-                              style={{ background: "none", border: "none", color: "#6b5a4e", fontSize: 13, fontFamily: "monospace", flex: 1 }} />
+                            <input value={value} onChange={e => setter(e.target.value)} style={{ background: "none", border: "none", color: theme.textSub, fontSize: 12, fontFamily: "monospace", flex: 1 }} />
                           </div>
                         </div>
                       ))}
                     </div>
                   </div>
-
-                  {/* Palettes */}
-                  <div style={{ background: "white", border: "1px solid #f0ebe3", borderRadius: 14, padding: 20 }}>
-                    <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 15, fontWeight: 700, color: "#1a0e04", marginBottom: 14 }}>Preset Palettes</div>
+                  <div style={{ background: theme.surface, border: `1px solid ${theme.border}`, borderRadius: 14, padding: 20, transition: "background 0.2s" }}>
+                    <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 15, fontWeight: 700, color: theme.text, marginBottom: 12 }}>Preset Palettes</div>
                     <div className="palette-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
                       {PRESET_PALETTES.map(palette => (
                         <div key={palette.name} onClick={() => applyPalette(palette)}
-                          style={{ background: palette.bg, border: "1px solid #f0ebe3", borderRadius: 10, padding: "12px", cursor: "pointer", userSelect: "none" }}>
-                          <div style={{ display: "flex", gap: 4, marginBottom: 8, pointerEvents: "none" }}>
+                          style={{ background: mode === "dark" ? theme.surfaceAlt : palette.bg, border: `1px solid ${theme.border}`, borderRadius: 10, padding: "10px", cursor: "pointer", userSelect: "none", transition: "all 0.15s" }}>
+                          <div style={{ display: "flex", gap: 3, marginBottom: 6, pointerEvents: "none" }}>
                             {[palette.primary, palette.secondary, palette.accent].map(c => (
-                              <div key={c} style={{ width: 14, height: 14, borderRadius: "50%", background: c }} />
+                              <div key={c} style={{ width: 12, height: 12, borderRadius: "50%", background: c }} />
                             ))}
                           </div>
-                          <div style={{ fontSize: 11, color: palette.primary, fontWeight: 600, pointerEvents: "none" }}>{palette.name}</div>
+                          <div style={{ fontSize: 10, color: palette.primary, fontWeight: 600, pointerEvents: "none" }}>{palette.name}</div>
                         </div>
                       ))}
                     </div>
@@ -256,21 +219,17 @@ export default function Branding() {
                 </div>
               )}
 
-              {/* STYLE TAB */}
+              {/* STYLE */}
               {activeTab === "style" && (
-                <div style={{ background: "white", border: "1px solid #f0ebe3", borderRadius: 14, padding: 20 }}>
-                  <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 15, fontWeight: 700, color: "#1a0e04", marginBottom: 16 }}>Label Style</div>
-                  <div className="style-grid" style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 12 }}>
+                <div style={{ background: theme.surface, border: `1px solid ${theme.border}`, borderRadius: 14, padding: 20, transition: "background 0.2s" }}>
+                  <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 15, fontWeight: 700, color: theme.text, marginBottom: 14 }}>Label Style</div>
+                  <div className="style-grid" style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10 }}>
                     {LABEL_STYLES.map(style => (
-                      <div key={style} onClick={() => setLabelStyle(style)} style={{
-                        background: labelStyle === style ? "#fef3e2" : "#faf9f7",
-                        border: labelStyle === style ? "1px solid #f3d098" : "1px solid #f0ebe3",
-                        borderRadius: 12, padding: "16px", cursor: "pointer",
-                      }}>
-                        <div style={{ height: 56, background: style === "Bold" ? primaryColor : bgColor, borderRadius: 8, marginBottom: 10, display: "flex", alignItems: "center", justifyContent: "center", border: style === "Minimal" ? `1px solid ${primaryColor}` : "none", pointerEvents: "none" }}>
-                          <span style={{ fontFamily: style === "Classic" || style === "Modern" ? "'Playfair Display', serif" : "sans-serif", fontSize: style === "Bold" ? 15 : 12, fontWeight: style === "Bold" ? 800 : 400, color: style === "Bold" ? "white" : primaryColor, letterSpacing: style === "Minimal" ? "0.2em" : "0.05em", fontStyle: style === "Classic" ? "italic" : "normal", textTransform: style === "Minimal" ? "uppercase" : "none", pointerEvents: "none" }}>{brandName || "Brand"}</span>
+                      <div key={style} onClick={() => setLabelStyle(style)} style={{ background: labelStyle === style ? theme.goldLight : theme.inputBg, border: labelStyle === style ? `1px solid ${theme.goldBorder}` : `1px solid ${theme.border}`, borderRadius: 12, padding: "14px", cursor: "pointer", transition: "all 0.15s" }}>
+                        <div style={{ height: 50, background: style === "Bold" ? primaryColor : bgColor, borderRadius: 7, marginBottom: 8, display: "flex", alignItems: "center", justifyContent: "center", border: style === "Minimal" ? `1px solid ${primaryColor}` : "none", pointerEvents: "none" }}>
+                          <span style={{ fontFamily: style === "Classic" || style === "Modern" ? "'Playfair Display', serif" : "sans-serif", fontSize: style === "Bold" ? 13 : 11, fontWeight: style === "Bold" ? 800 : 400, color: style === "Bold" ? "white" : primaryColor, letterSpacing: style === "Minimal" ? "0.2em" : "0.05em", fontStyle: style === "Classic" ? "italic" : "normal", textTransform: style === "Minimal" ? "uppercase" : "none", pointerEvents: "none" }}>{brandName || "Brand"}</span>
                         </div>
-                        <div style={{ fontSize: 13, color: labelStyle === style ? "#c9963a" : "#6b5a4e", fontWeight: 600, textAlign: "center" }}>{style}</div>
+                        <div style={{ fontSize: 12, color: labelStyle === style ? theme.gold : theme.textSub, fontWeight: 600, textAlign: "center" }}>{style}</div>
                       </div>
                     ))}
                   </div>
@@ -278,61 +237,52 @@ export default function Branding() {
               )}
             </div>
 
-            {/* RIGHT: LIVE PREVIEW */}
-            <div className="preview-sticky" style={{ position: "sticky", top: 20 }}>
-              <div style={{ background: "white", border: "1px solid #f0ebe3", borderRadius: 14, padding: 20 }}>
-                <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 15, fontWeight: 700, color: "#1a0e04", marginBottom: 16 }}>Live Preview</div>
+            {/* RIGHT: PREVIEW */}
+            <div className="preview-panel" style={{ position: "sticky", top: 20 }}>
+              <div style={{ background: theme.surface, border: `1px solid ${theme.border}`, borderRadius: 14, padding: 18, transition: "background 0.2s" }}>
+                <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 14, fontWeight: 700, color: theme.text, marginBottom: 14 }}>Live Preview</div>
 
-                {/* Label Preview */}
-                <div style={{ background: bgColor, borderRadius: 12, padding: "28px 20px", textAlign: "center", border: `1px solid ${primaryColor}20`, marginBottom: 14 }}>
+                <div style={{ background: bgColor, borderRadius: 12, padding: "24px 18px", textAlign: "center", border: `1px solid ${primaryColor}25`, marginBottom: 12 }}>
                   {logoUrl ? (
-                    <img src={logoUrl} alt="logo" style={{ height: 52, objectFit: "contain", margin: "0 auto 14px", display: "block" }} />
+                    <img src={logoUrl} alt="logo" style={{ height: 48, objectFit: "contain", margin: "0 auto 12px", display: "block" }} />
                   ) : (
-                    <div style={{ width: 52, height: 52, borderRadius: "50%", background: `linear-gradient(135deg, ${primaryColor}, ${secondaryColor})`, margin: "0 auto 14px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22 }}>✦</div>
+                    <div style={{ width: 48, height: 48, borderRadius: "50%", background: `linear-gradient(135deg, ${primaryColor}, ${secondaryColor})`, margin: "0 auto 12px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 }}>✦</div>
                   )}
-                  <div style={{ fontFamily: labelStyle === "Classic" || labelStyle === "Modern" ? "'Playfair Display', serif" : "sans-serif", fontSize: labelStyle === "Bold" ? 20 : 17, fontWeight: labelStyle === "Bold" ? 800 : 400, color: primaryColor, letterSpacing: labelStyle === "Minimal" ? "0.2em" : "0.06em", fontStyle: labelStyle === "Classic" ? "italic" : "normal", textTransform: labelStyle === "Minimal" ? "uppercase" : "none", marginBottom: 6 }}>{brandName}</div>
-                  <div style={{ fontSize: 10, color: secondaryColor, letterSpacing: "0.12em", textTransform: "uppercase", opacity: 0.7, marginBottom: 16 }}>{tagline}</div>
-                  <div style={{ width: 32, height: 1, background: primaryColor, margin: "0 auto 16px", opacity: 0.4 }}></div>
-                  <div style={{ fontSize: 13, color: secondaryColor, marginBottom: 2 }}>Rose Glow Serum</div>
-                  <div style={{ fontSize: 10, color: secondaryColor, opacity: 0.5 }}>30ml · Made in Korea</div>
-                  <div style={{ display: "flex", justifyContent: "center", gap: 5, marginTop: 14 }}>
+                  <div style={{ fontFamily: labelStyle === "Classic" || labelStyle === "Modern" ? "'Playfair Display', serif" : "sans-serif", fontSize: labelStyle === "Bold" ? 19 : 16, fontWeight: labelStyle === "Bold" ? 800 : 400, color: primaryColor, letterSpacing: labelStyle === "Minimal" ? "0.2em" : "0.06em", fontStyle: labelStyle === "Classic" ? "italic" : "normal", textTransform: labelStyle === "Minimal" ? "uppercase" : "none", marginBottom: 5 }}>{brandName}</div>
+                  <div style={{ fontSize: 9, color: secondaryColor, letterSpacing: "0.12em", textTransform: "uppercase", opacity: 0.7, marginBottom: 14 }}>{tagline}</div>
+                  <div style={{ width: 28, height: 1, background: primaryColor, margin: "0 auto 12px", opacity: 0.4 }}></div>
+                  <div style={{ fontSize: 12, color: secondaryColor, marginBottom: 2 }}>Rose Glow Serum</div>
+                  <div style={{ fontSize: 9, color: secondaryColor, opacity: 0.5 }}>30ml · Made in Korea</div>
+                  <div style={{ display: "flex", justifyContent: "center", gap: 4, marginTop: 12 }}>
                     {[primaryColor, secondaryColor, accentColor].map(c => (
-                      <div key={c} style={{ width: 8, height: 8, borderRadius: "50%", background: c, opacity: 0.7 }} />
+                      <div key={c} style={{ width: 7, height: 7, borderRadius: "50%", background: c, opacity: 0.7 }} />
                     ))}
                   </div>
                 </div>
 
-                {/* Bottle Preview */}
-                <div style={{ background: "#faf9f7", borderRadius: 12, padding: "16px 20px", textAlign: "center", border: "1px solid #f0ebe3", marginBottom: 14 }}>
-                  <div style={{ fontSize: 12, color: "#a09080", fontWeight: 500, marginBottom: 12 }}>Bottle Preview</div>
-                  <div style={{ display: "flex", justifyContent: "center", gap: 14 }}>
-                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 5 }}>
-                      <div style={{ width: 28, height: 70, background: `linear-gradient(180deg, ${secondaryColor}, ${primaryColor})`, borderRadius: "3px 3px 5px 5px", position: "relative", border: `1px solid ${primaryColor}30` }}>
-                        <div style={{ position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)", width: 9, height: 9, background: secondaryColor, borderRadius: "2px 2px 0 0" }}></div>
+                <div style={{ background: theme.surfaceAlt, borderRadius: 10, padding: "14px 16px", textAlign: "center", border: `1px solid ${theme.border}`, marginBottom: 12 }}>
+                  <div style={{ fontSize: 11, color: theme.textMuted, fontWeight: 500, marginBottom: 10 }}>Bottle Preview</div>
+                  <div style={{ display: "flex", justifyContent: "center", gap: 12 }}>
+                    {[
+                      { w: 26, h: 68, label: "Serum", top: 9, capW: 9 },
+                      { w: 42, h: 34, label: "Jar", top: -5, capW: 42 },
+                      { w: 16, h: 60, label: "Tube", top: -3, capW: 10 },
+                    ].map((b, i) => (
+                      <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+                        <div style={{ width: b.w, height: b.h, background: `linear-gradient(180deg, ${secondaryColor}, ${primaryColor})`, borderRadius: i === 1 ? "3px 3px 6px 6px" : "2px 2px 5px 5px", position: "relative", border: `1px solid ${primaryColor}30` }}>
+                          <div style={{ position: "absolute", top: b.top, left: "50%", transform: "translateX(-50%)", width: b.capW, height: i === 1 ? 6 : 8, background: secondaryColor, borderRadius: 2 }}></div>
+                        </div>
+                        <div style={{ fontSize: 9, color: theme.textMuted }}>{b.label}</div>
                       </div>
-                      <div style={{ fontSize: 9, color: "#a09080" }}>Serum</div>
-                    </div>
-                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 5 }}>
-                      <div style={{ width: 44, height: 36, background: `linear-gradient(180deg, ${primaryColor}, ${secondaryColor})`, borderRadius: "4px 4px 7px 7px", border: `1px solid ${primaryColor}30`, position: "relative" }}>
-                        <div style={{ position: "absolute", top: -5, left: 0, right: 0, height: 7, background: secondaryColor, borderRadius: "4px 4px 0 0" }}></div>
-                      </div>
-                      <div style={{ fontSize: 9, color: "#a09080" }}>Jar</div>
-                    </div>
-                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 5 }}>
-                      <div style={{ width: 18, height: 64, background: `linear-gradient(180deg, ${accentColor}, ${primaryColor})`, borderRadius: "2px 2px 7px 7px", border: `1px solid ${primaryColor}30`, position: "relative" }}>
-                        <div style={{ position: "absolute", top: -3, left: "50%", transform: "translateX(-50%)", width: 11, height: 5, background: secondaryColor, borderRadius: 2 }}></div>
-                      </div>
-                      <div style={{ fontSize: 9, color: "#a09080" }}>Tube</div>
-                    </div>
+                    ))}
                   </div>
                 </div>
 
-                {/* Color Summary */}
-                <div style={{ display: "flex", gap: 8 }}>
+                <div style={{ display: "flex", gap: 6 }}>
                   {[{ label: "Primary", color: primaryColor }, { label: "Secondary", color: secondaryColor }, { label: "Accent", color: accentColor }].map(({ label, color }) => (
-                    <div key={label} style={{ flex: 1, background: "#faf9f7", borderRadius: 8, padding: "8px", textAlign: "center", border: "1px solid #f0ebe3" }}>
-                      <div style={{ width: 18, height: 18, borderRadius: "50%", background: color, margin: "0 auto 5px", border: "1px solid #f0ebe3" }}></div>
-                      <div style={{ fontSize: 9, color: "#a09080", textTransform: "uppercase", letterSpacing: "0.06em" }}>{label}</div>
+                    <div key={label} style={{ flex: 1, background: theme.surfaceAlt, borderRadius: 8, padding: "7px 6px", textAlign: "center", border: `1px solid ${theme.border}` }}>
+                      <div style={{ width: 16, height: 16, borderRadius: "50%", background: color, margin: "0 auto 4px" }}></div>
+                      <div style={{ fontSize: 9, color: theme.textMuted, textTransform: "uppercase" }}>{label}</div>
                     </div>
                   ))}
                 </div>
