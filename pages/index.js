@@ -153,7 +153,7 @@ const CSS = `
 
   .testi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;max-width:1000px;margin:0 auto;}
   .testi-card{background:white;border-radius:20px;padding:32px 28px;box-shadow:var(--shadow-md);border:1px solid var(--border);position:relative;overflow:hidden;}
-  .testi-card::before{content:'\201C';position:absolute;top:-10px;right:20px;font-family:var(--serif);font-size:120px;color:var(--olive-p);line-height:1;pointer-events:none;}
+  .testi-card::before{content:open-quote;position:absolute;top:-10px;right:20px;font-family:var(--serif);font-size:120px;color:var(--olive-p);line-height:1;pointer-events:none;quotes:'"' '"';}
   .testi-stars{color:var(--gold);font-size:14px;letter-spacing:2px;margin-bottom:16px;}
   .testi-quote{font-size:15px;line-height:1.75;color:var(--text-s);margin-bottom:22px;font-style:italic;}
   .testi-name{font-size:14px;font-weight:700;color:var(--charcoal);}
