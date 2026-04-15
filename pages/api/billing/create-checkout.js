@@ -3,10 +3,10 @@ import Stripe from "stripe";
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 const PRICE_IDS = {
-  starter_monthly: process.env.STRIPE_PRICE_STARTER_MONTHLY,
-  starter_yearly: process.env.STRIPE_PRICE_STARTER_YEARLY,
-  growth_monthly: process.env.STRIPE_PRICE_GROWTH_MONTHLY,
-  growth_yearly: process.env.STRIPE_PRICE_GROWTH_YEARLY,
+  starter_monthly: "price_1TMT75RwvBnbn1oDhqjh7btV",
+  starter_yearly: "price_1TMT7XRwvBnbn1oDq2zjhMBe",
+  growth_monthly: "price_1TMT7mRwvBnbn1oDpZoQmLxC",
+  growth_yearly: "price_1TMT85RwvBnbn1oDnSPZ1IYf",
 };
 
 export default async function handler(req, res) {
@@ -22,7 +22,7 @@ export default async function handler(req, res) {
   const priceId = PRICE_IDS[priceKey];
 
   if (!priceId) {
-    return res.status(400).json({ error: "Invalid plan or period" });
+    return res.status(400).json({ error: `Invalid plan: ${priceKey}` });
   }
 
   try {
@@ -37,12 +37,11 @@ export default async function handler(req, res) {
         metadata: { shop, planId },
         trial_period_days: 14,
       },
-      customer_email: undefined, // Optionally pre-fill from merchant data
     });
 
     return res.status(200).json({ url: session.url });
   } catch (err) {
-    console.error("Stripe error:", err);
+    console.error("Stripe error:", err.message);
     return res.status(500).json({ error: err.message });
   }
 }
