@@ -231,13 +231,13 @@ export default function Dashboard() {
                     </div>
                     <span style={{ fontSize: 11, fontWeight: 600, color: theme.green, background: theme.greenSubtle, padding: "2px 7px", borderRadius: 100 }}>↑ +18.4%</span>
                   </div>
-                  <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 22, fontWeight: 500, color: theme.gold, marginBottom: 4 }}>${stats.revenue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                  <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 22, fontWeight: 500, color: theme.gold, marginBottom: 4 }}>${(stats.revenue ?? 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                   <div style={{ fontSize: 12, fontWeight: 500, color: theme.textTertiary }}>Revenue this month</div>
                 </div>
                 {[
-                  { icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={theme.gold} strokeWidth="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>, value: stats.products.toString(), label: "Products published", delta: null, up: true },
-                  { icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={theme.gold} strokeWidth="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>, value: stats.orders.toString(), label: "Total orders", delta: null, up: true },
-                  { icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={theme.gold} strokeWidth="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>, value: `${stats.fulfillment}%`, label: "Fulfillment rate", delta: null, up: true },
+                  { icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={theme.gold} strokeWidth="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>, value: String(stats.products ?? 0), label: "Products published", delta: null, up: true },
+                  { icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={theme.gold} strokeWidth="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>, value: String(stats.orders ?? 0), label: "Total orders", delta: null, up: true },
+                  { icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={theme.gold} strokeWidth="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>, value: `${stats.fulfillment ?? 0}%`, label: "Fulfillment rate", delta: null, up: true },
                 ].map((s, i) => (
                   <div key={i} className="stat-card" style={{ background: theme.bgCard, border: `1px solid ${theme.borderSubtle}`, borderRadius: 10, padding: "18px 20px", boxShadow: theme.shadow, transition: "all 0.2s" }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 }}>
