@@ -27,9 +27,9 @@ const PRODUCTS = [
   { name: "Rose Glow Serum", cat: "Skincare", price: "$22.99", img: "https://ecqkxtxxmtwxhwydcevq.supabase.co/storage/v1/object/public/branding-assets/pszvvMNBTJaVnDojdiQkpw@2k.webp" },
   { name: "Matte Lip Studio", cat: "Cosmetics", price: "$13.59", img: "https://ecqkxtxxmtwxhwydcevq.supabase.co/storage/v1/object/public/branding-assets/rsdlZycFSbOXD4UeesaTtg@2k%20(1).webp" },
   { name: "Keratin Repair Mask", cat: "Haircare", price: "$37.49", img: "https://ecqkxtxxmtwxhwydcevq.supabase.co/storage/v1/object/public/branding-assets/iLEtWdoIRoq0erfniMRspg@2k.webp" },
-  { name: "Vitamin C Brightener", cat: "Skincare", price: "$25.99", img: "https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b?w=400&q=80" },
-  { name: "Glow Highlighter", cat: "Cosmetics", price: "$17.49", img: "https://images.unsplash.com/photo-1512496015851-a90fb38ba796?w=400&q=80" },
-  { name: "Scalp Revival Serum", cat: "Haircare", price: "$33.79", img: "https://images.unsplash.com/photo-1526045431048-f857369baa09?w=400&q=80" },
+  { name: "Vitamin C Brightener", cat: "Skincare", price: "$25.99", img: "https://images.unsplash.com/photo-1570194065650-d99fb4bedf0a?w=400&q=80" },
+  { name: "Glow Highlighter", cat: "Cosmetics", price: "$17.49", img: "https://images.unsplash.com/photo-1599733594230-6b823276d7b5?w=400&q=80" },
+  { name: "Scalp Revival Serum", cat: "Haircare", price: "$33.79", img: "https://images.unsplash.com/photo-1535585209827-a15fcdbc4c2d?w=400&q=80" },
 ];
 
 const STEPS = [
