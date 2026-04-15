@@ -427,10 +427,10 @@ export default function Home() {
             <div className="footer-logo">Cucuma<span>®</span></div>
             <p className="footer-desc">Launch your private label beauty brand with zero upfront inventory. Design, publish, sell — all in one platform.</p>
           </div>
-          {[{ title: "Platform", links: ["How It Works", "Catalogue", "Branding Tools", "Fulfillment", "Pricing"] }, { title: "Resources", links: ["Getting Started", "Help Center", "Label Templates", "Blog"] }, { title: "Legal", links: ["Terms of Service", "Privacy Policy", "Shipping Policy", "Refund Policy"] }].map(col => (
+          {[{ title: "Platform", links: [["How It Works", "#how"], ["Catalogue", "#catalogue"], ["Pricing", "#pricing"]] }, { title: "Resources", links: [["Getting Started", "#install"], ["Help Center", "/help"], ["Blog", "#"]] }, { title: "Legal", links: [["Terms of Service", "/terms"], ["Privacy Policy", "/privacy"], ["Shipping Policy", "/terms"], ["Refund Policy", "/terms"]] }].map(col => (
             <div key={col.title}>
               <div className="footer-col-title">{col.title}</div>
-              <div className="footer-links">{col.links.map(l => <a key={l} href="#" className="footer-link">{l}</a>)}</div>
+              <div className="footer-links">{col.links.map(([l, href]) => <a key={l} href={href} className="footer-link">{l}</a>)}</div>
             </div>
           ))}
         </div>

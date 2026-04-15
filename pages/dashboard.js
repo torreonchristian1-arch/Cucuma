@@ -52,15 +52,14 @@ export default function Dashboard() {
   const [notifications, setNotifications] = useState([]);
   const [showNotifs, setShowNotifs] = useState(false);
   const [unread, setUnread] = useState(0);
+  const [recentOrders, setRecentOrders] = useState([]);
+  const [stats, setStats] = useState({ revenue: 0, products: 0, orders: 0, fulfillment: 0 });
+  const prevOrderCount = useRef(0);
   const notifRef = useRef(null);
 
   useEffect(() => {
     if (!shop) { setLoading(false); return; }
-    supabase.from("merchants").select("shop_domain").eq("shop_domain", shop).single()
-      .then(({ data }) => { if (data) setMerchant(data); setLoading(false); });
-
-    // Load notifications from orders
-    loadNotifications();
+    loadDashboard();
     const interval = setInterval(checkNewOrders, 30000);
     return () => clearInterval(interval);
   }, [shop]);
@@ -71,21 +70,65 @@ export default function Dashboard() {
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
-  async function loadNotifications() {
+  async function loadDashboard() {
     if (!shop) return;
     try {
-      const { data } = await supabase.from("orders").select("*").eq("shop_domain", shop).order("created_at", { ascending: false }).limit(5);
-      if (data) {
-        setNotifications(data.map(o => ({ id: o.shopify_order_id, title: "New Order", msg: `${o.customer_name || "A customer"} ordered $${parseFloat(o.total_price || 0).toFixed(2)}`, time: o.created_at, read: true })));
+      // Load merchant
+      const { data: merchantData } = await supabase.from("merchants").select("shop_domain").eq("shop_domain", shop).single();
+      if (merchantData) setMerchant(merchantData);
+
+      // Load orders for real stats
+      const { data: orders } = await supabase.from("orders").select("*").eq("shop_domain", shop).order("created_at", { ascending: false });
+      if (orders) {
+        const totalRevenue = orders.filter(o => o.financial_status !== "refunded").reduce((sum, o) => sum + parseFloat(o.total_price || 0), 0);
+        const fulfilled = orders.filter(o => o.fulfillment_status === "fulfilled").length;
+        const fulfillmentRate = orders.length > 0 ? Math.round((fulfilled / orders.length) * 100) : 0;
+
+        setStats({
+          revenue: totalRevenue,
+          orders: orders.length,
+          fulfillment: fulfillmentRate,
+        });
+
+        setRecentOrders(orders.slice(0, 5));
+        prevOrderCount.current = orders.length;
+
+        // Notifications from recent orders
+        setNotifications(orders.slice(0, 8).map(o => ({
+          id: o.shopify_order_id,
+          title: "New Order",
+          msg: `${o.customer_name || "A customer"} ordered $${parseFloat(o.total_price || 0).toFixed(2)}`,
+          time: o.created_at,
+          read: true,
+        })));
       }
+
+      // Load published products count
+      const { data: published } = await supabase.from("published_products").select("id").eq("shop_domain", shop);
+      if (published) setStats(prev => ({ ...prev, products: published.length }));
+
     } catch {}
+    setLoading(false);
   }
 
   async function checkNewOrders() {
     if (!shop) return;
     try {
-      const { data } = await supabase.from("orders").select("count").eq("shop_domain", shop);
-      // simplified — in production would compare timestamps
+      const { data: orders } = await supabase.from("orders").select("*").eq("shop_domain", shop).order("created_at", { ascending: false }).limit(20);
+      if (orders && orders.length > prevOrderCount.current) {
+        const newCount = orders.length - prevOrderCount.current;
+        setUnread(prev => prev + newCount);
+        const newNotifs = orders.slice(0, newCount).map(o => ({
+          id: o.shopify_order_id + "_new",
+          title: "New Order!",
+          msg: `${o.customer_name || "A customer"} ordered $${parseFloat(o.total_price || 0).toFixed(2)}`,
+          time: o.created_at,
+          read: false,
+        }));
+        setNotifications(prev => [...newNotifs, ...prev].slice(0, 20));
+        setRecentOrders(orders.slice(0, 5));
+        prevOrderCount.current = orders.length;
+      }
     } catch {}
   }
 
@@ -188,13 +231,13 @@ export default function Dashboard() {
                     </div>
                     <span style={{ fontSize: 11, fontWeight: 600, color: theme.green, background: theme.greenSubtle, padding: "2px 7px", borderRadius: 100 }}>↑ +18.4%</span>
                   </div>
-                  <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 22, fontWeight: 500, color: theme.gold, marginBottom: 4 }}>$5,088</div>
+                  <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 22, fontWeight: 500, color: theme.gold, marginBottom: 4 }}>${stats.revenue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                   <div style={{ fontSize: 12, fontWeight: 500, color: theme.textTertiary }}>Revenue this month</div>
                 </div>
                 {[
-                  { icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={theme.gold} strokeWidth="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>, value: "12", label: "Products published", delta: "+3", up: true },
-                  { icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={theme.gold} strokeWidth="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>, value: "38", label: "Total orders", delta: "-4 today", up: false },
-                  { icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={theme.gold} strokeWidth="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>, value: "97.2%", label: "Fulfillment rate", delta: "+0.8%", up: true },
+                  { icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={theme.gold} strokeWidth="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>, value: stats.products.toString(), label: "Products published", delta: null, up: true },
+                  { icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={theme.gold} strokeWidth="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>, value: stats.orders.toString(), label: "Total orders", delta: null, up: true },
+                  { icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={theme.gold} strokeWidth="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>, value: `${stats.fulfillment}%`, label: "Fulfillment rate", delta: null, up: true },
                 ].map((s, i) => (
                   <div key={i} className="stat-card" style={{ background: theme.bgCard, border: `1px solid ${theme.borderSubtle}`, borderRadius: 10, padding: "18px 20px", boxShadow: theme.shadow, transition: "all 0.2s" }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 }}>
@@ -228,15 +271,22 @@ export default function Dashboard() {
                         </tr>
                       </thead>
                       <tbody>
-                        {SAMPLE_ORDERS.map((o, i) => (
+                      {(recentOrders.length > 0 ? recentOrders : SAMPLE_ORDERS).map((o, i) => {
+                          const isReal = !!o.shopify_order_id;
+                          const status = isReal ? (o.fulfillment_status || "unfulfilled") : o.status;
+                          const orderId = isReal ? o.order_number : o.id;
+                          const customer = isReal ? (o.customer_name || "Guest") : o.customer;
+                          const product = isReal ? (o.line_items ? (typeof o.line_items === "string" ? JSON.parse(o.line_items)[0]?.title : o.line_items[0]?.title) : "—") : o.product;
+                          const amount = isReal ? parseFloat(o.total_price || 0).toFixed(2) : o.amount;
+                          return (
                           <tr key={i} className="orow" style={{ borderBottom: `1px solid ${theme.borderSubtle}`, transition: "background 0.12s", cursor: "pointer" }} onClick={() => goTo("/orders")}>
-                            <td style={{ padding: "12px 16px", fontSize: 12, fontWeight: 600, color: theme.gold, fontFamily: "'JetBrains Mono', monospace" }}>{o.id}</td>
-                            <td style={{ padding: "12px 16px", fontSize: 13, color: theme.textPrimary, fontWeight: 500 }}>{o.customer}</td>
-                            <td style={{ padding: "12px 16px", fontSize: 12, color: theme.textSecondary }}>{o.product}</td>
-                            <td style={{ padding: "12px 16px", fontSize: 13, fontWeight: 600, color: theme.textPrimary, fontFamily: "'JetBrains Mono', monospace" }}>${o.amount}</td>
-                            <td style={{ padding: "12px 16px" }}><StatusBadge status={o.status} theme={theme} /></td>
+                            <td style={{ padding: "12px 16px", fontSize: 12, fontWeight: 600, color: theme.gold, fontFamily: "'JetBrains Mono', monospace" }}>{orderId}</td>
+                            <td style={{ padding: "12px 16px", fontSize: 13, color: theme.textPrimary, fontWeight: 500 }}>{customer}</td>
+                            <td style={{ padding: "12px 16px", fontSize: 12, color: theme.textSecondary }}>{product}</td>
+                            <td style={{ padding: "12px 16px", fontSize: 13, fontWeight: 600, color: theme.textPrimary, fontFamily: "'JetBrains Mono', monospace" }}>${amount}</td>
+                            <td style={{ padding: "12px 16px" }}><StatusBadge status={status} theme={theme} /></td>
                           </tr>
-                        ))}
+                        );})
                       </tbody>
                     </table>
                   </div>
