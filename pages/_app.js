@@ -67,8 +67,10 @@ export default function App({ Component, pageProps }) {
 
   const theme = THEMES[mode];
 
-  // Avoid flash of wrong theme
-  if (!mounted) return null;
+  // Avoid flash of wrong theme - use default dark until mounted
+  const activeTheme = mounted ? theme : THEMES.dark;
+
+  const theme = activeTheme;
 
   return (
     <ThemeContext.Provider value={{ mode, theme, toggleTheme }}>
