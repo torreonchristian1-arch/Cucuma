@@ -99,16 +99,16 @@ export default function SideNav({ active, shop, open = true }) {
               onMouseLeave={() => setHoveredItem(null)}
               title={compact ? item.label : undefined}
               style={{ display: "flex", alignItems: "center", gap: compact ? 0 : 10, justifyContent: compact ? "center" : "flex-start", padding: compact ? "10px" : "9px 10px", borderRadius: 8, cursor: "pointer", marginBottom: 2, position: "relative", userSelect: "none",
-                background: isActive ? theme.goldSubtle : isHovered ? theme.bgElevated : "transparent",
-                color: isActive ? theme.gold : isHovered ? theme.textPrimary : theme.textSecondary,
+                background: isActive ? (theme.oliveSubtle || theme.goldSubtle) : isHovered ? theme.bgElevated : "transparent",
+                color: isActive ? (theme.olive || theme.gold) : isHovered ? theme.textPrimary : theme.textSecondary,
                 transition: "all 0.15s ease",
               }}>
               {/* Active accent bar */}
               {isActive && (
-                <div style={{ position: "absolute", left: 0, top: "20%", bottom: "20%", width: 3, background: theme.gold, borderRadius: "0 3px 3px 0" }}></div>
+                <div style={{ position: "absolute", left: 0, top: "20%", bottom: "20%", width: 3, background: theme.olive || theme.gold, borderRadius: "0 3px 3px 0" }}></div>
               )}
               <div style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                {item.icon(isActive ? theme.gold : isHovered ? theme.textPrimary : theme.textSecondary)}
+                {item.icon(isActive ? (theme.olive || theme.gold) : isHovered ? theme.textPrimary : theme.textSecondary)}
               </div>
               {!compact && (
                 <span style={{ fontSize: 13, fontWeight: isActive ? 600 : 500, whiteSpace: "nowrap" }}>{item.label}</span>

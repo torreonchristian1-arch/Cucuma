@@ -5,50 +5,57 @@ export const ThemeContext = createContext();
 export function useTheme() { return useContext(ThemeContext); }
 
 export const THEMES = {
+  light: {
+    // Matches landing page exactly
+    bgBase: "#FAF7F2",
+    bgCard: "#FFFFFF",
+    bgElevated: "#F2EDE4",
+    bgSurface: "#EDE8DF",
+    borderSubtle: "#E8E0D4",
+    borderDefault: "#D4C9B8",
+    textPrimary: "#2C2C2C",
+    textSecondary: "#6B6355",
+    textTertiary: "#9A9085",
+    gold: "#B8860B",
+    goldHover: "#A07828",
+    goldSubtle: "rgba(184,134,11,0.08)",
+    goldBorder: "rgba(184,134,11,0.22)",
+    olive: "#3D5A3E",
+    oliveSubtle: "rgba(61,90,62,0.08)",
+    oliveBorder: "rgba(61,90,62,0.2)",
+    green: "#3D5A3E",
+    greenSubtle: "rgba(61,90,62,0.08)",
+    greenBorder: "rgba(61,90,62,0.2)",
+    shadow: "0 1px 4px rgba(44,44,44,0.07)",
+    shadowMd: "0 4px 20px rgba(44,44,44,0.1)",
+  },
   dark: {
-    bgBase: "#0C0C0C",
-    bgCard: "#161616",
-    bgElevated: "#1E1E1E",
-    bgSurface: "#252525",
-    borderSubtle: "#2A2A2A",
-    borderDefault: "#333333",
-    textPrimary: "#F5F0EB",
-    textSecondary: "#9A9490",
-    textTertiary: "#6B6560",
-    gold: "#C4975A",
-    goldHover: "#D4A76A",
-    goldSubtle: "rgba(196,151,90,0.12)",
-    goldBorder: "rgba(196,151,90,0.28)",
+    bgBase: "#1a1208",
+    bgCard: "#221A0E",
+    bgElevated: "#2C2214",
+    bgSurface: "#352A18",
+    borderSubtle: "#3D3020",
+    borderDefault: "#4A3A28",
+    textPrimary: "#FAF7F2",
+    textSecondary: "#C4B49A",
+    textTertiary: "#8A7A66",
+    gold: "#D4A84E",
+    goldHover: "#E0B860",
+    goldSubtle: "rgba(212,168,78,0.12)",
+    goldBorder: "rgba(212,168,78,0.28)",
+    olive: "#4A9D6E",
+    oliveSubtle: "rgba(74,157,110,0.12)",
+    oliveBorder: "rgba(74,157,110,0.28)",
     green: "#4A9D6E",
     greenSubtle: "rgba(74,157,110,0.12)",
     greenBorder: "rgba(74,157,110,0.28)",
-    shadow: "0 1px 3px rgba(0,0,0,0.4)",
-    shadowMd: "0 4px 20px rgba(0,0,0,0.45)",
-  },
-  light: {
-    bgBase: "#F8F5F1",
-    bgCard: "#FFFFFF",
-    bgElevated: "#F2EDE6",
-    bgSurface: "#EDE8E1",
-    borderSubtle: "#E5DDD4",
-    borderDefault: "#D4C9BC",
-    textPrimary: "#1A1208",
-    textSecondary: "#6B5A4A",
-    textTertiary: "#9A8A7A",
-    gold: "#A07030",
-    goldHover: "#B08040",
-    goldSubtle: "rgba(160,112,48,0.1)",
-    goldBorder: "rgba(160,112,48,0.25)",
-    green: "#2E7D52",
-    greenSubtle: "rgba(46,125,82,0.1)",
-    greenBorder: "rgba(46,125,82,0.25)",
-    shadow: "0 1px 3px rgba(0,0,0,0.07)",
-    shadowMd: "0 4px 20px rgba(0,0,0,0.1)",
+    shadow: "0 1px 4px rgba(0,0,0,0.3)",
+    shadowMd: "0 4px 20px rgba(0,0,0,0.4)",
   }
 };
 
 export default function App({ Component, pageProps }) {
-  const [mode, setMode] = useState("dark");
+  const [mode, setMode] = useState("light");
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -68,16 +75,14 @@ export default function App({ Component, pageProps }) {
   const theme = THEMES[mode];
 
   // Avoid flash of wrong theme - use default dark until mounted
-  const activeTheme = mounted ? theme : THEMES.dark;
-
-  const theme = activeTheme;
+  const activeTheme = mounted ? THEMES[mode] : THEMES.dark;
 
   return (
-    <ThemeContext.Provider value={{ mode, theme, toggleTheme }}>
+    <ThemeContext.Provider value={{ mode, theme: activeTheme, toggleTheme }}>
       <Head>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
         <style>{`
           *, *::before, *::after {
             box-sizing: border-box;
@@ -90,9 +95,9 @@ export default function App({ Component, pageProps }) {
             scroll-behavior: smooth;
           }
           body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            background: ${theme.bgBase};
-            color: ${theme.textPrimary};
+            font-family: 'DM Sans', sans-serif;
+            background: ${activeTheme.bgBase};
+            color: ${activeTheme.textPrimary};
             font-size: 14px;
             line-height: 1.6;
             overflow-x: hidden;
@@ -102,12 +107,12 @@ export default function App({ Component, pageProps }) {
           /* Scrollbars */
           ::-webkit-scrollbar { width: 4px; height: 4px; }
           ::-webkit-scrollbar-track { background: transparent; }
-          ::-webkit-scrollbar-thumb { background: ${theme.borderDefault}; border-radius: 10px; }
-          ::-webkit-scrollbar-thumb:hover { background: ${theme.textTertiary}; }
+          ::-webkit-scrollbar-thumb { background: ${activeTheme.borderDefault}; border-radius: 10px; }
+          ::-webkit-scrollbar-thumb:hover { background: ${activeTheme.textTertiary}; }
 
           /* Focus styles */
           *:focus-visible {
-            outline: 2px solid ${theme.gold};
+            outline: 2px solid ${activeTheme.gold};
             outline-offset: 2px;
             border-radius: 4px;
           }
@@ -137,7 +142,7 @@ export default function App({ Component, pageProps }) {
           }
           .hover-lift:hover {
             transform: translateY(-2px);
-            box-shadow: ${theme.shadowMd} !important;
+            box-shadow: ${activeTheme.shadowMd} !important;
           }
 
           /* Responsive utilities */
@@ -168,24 +173,24 @@ export default function App({ Component, pageProps }) {
           .mono { font-family: 'JetBrains Mono', monospace !important; }
 
           /* Gold text */
-          .text-gold { color: ${theme.gold} !important; }
-          .text-green { color: ${theme.green} !important; }
-          .text-muted { color: ${theme.textTertiary} !important; }
+          .text-gold { color: ${activeTheme.gold} !important; }
+          .text-green { color: ${activeTheme.green} !important; }
+          .text-muted { color: ${activeTheme.textTertiary} !important; }
 
           /* Common badge */
           .badge-gold {
-            background: ${theme.goldSubtle};
-            color: ${theme.gold};
-            border: 1px solid ${theme.goldBorder};
+            background: ${activeTheme.goldSubtle};
+            color: ${activeTheme.gold};
+            border: 1px solid ${activeTheme.goldBorder};
             font-size: 11px;
             font-weight: 700;
             padding: 3px 9px;
             border-radius: 100px;
           }
           .badge-green {
-            background: ${theme.greenSubtle};
-            color: ${theme.green};
-            border: 1px solid ${theme.greenBorder};
+            background: ${activeTheme.greenSubtle};
+            color: ${activeTheme.green};
+            border: 1px solid ${activeTheme.greenBorder};
             font-size: 11px;
             font-weight: 700;
             padding: 3px 9px;
@@ -194,7 +199,7 @@ export default function App({ Component, pageProps }) {
 
           /* Primary button */
           .btn-primary {
-            background: ${theme.gold};
+            background: ${activeTheme.gold};
             color: white;
             border: none;
             border-radius: 8px;
@@ -209,7 +214,7 @@ export default function App({ Component, pageProps }) {
             font-family: 'Plus Jakarta Sans', sans-serif;
           }
           .btn-primary:hover {
-            background: ${theme.goldHover};
+            background: ${activeTheme.goldHover};
             transform: translateY(-1px);
             box-shadow: 0 4px 14px rgba(196,151,90,0.35);
           }
@@ -218,8 +223,8 @@ export default function App({ Component, pageProps }) {
           /* Secondary button */
           .btn-secondary {
             background: transparent;
-            color: ${theme.textSecondary};
-            border: 1px solid ${theme.borderDefault};
+            color: ${activeTheme.textSecondary};
+            border: 1px solid ${activeTheme.borderDefault};
             border-radius: 8px;
             padding: 8px 16px;
             font-size: 13px;
@@ -232,9 +237,9 @@ export default function App({ Component, pageProps }) {
             font-family: 'Plus Jakarta Sans', sans-serif;
           }
           .btn-secondary:hover {
-            background: ${theme.bgElevated};
-            color: ${theme.textPrimary};
-            border-color: ${theme.borderDefault};
+            background: ${activeTheme.bgElevated};
+            color: ${activeTheme.textPrimary};
+            border-color: ${activeTheme.borderDefault};
           }
         `}</style>
       </Head>
