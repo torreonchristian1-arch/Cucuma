@@ -33,9 +33,9 @@ const PRODUCTS = [
 ];
 
 const STEPS = [
-  { n: "01", title: "Choose Your Products", desc: "Browse 18+ luxury beauty products — skincare, cosmetics, haircare. All reverse-engineered luxury formulas, ready to brand as your own.", img: "https://images.unsplash.com/photo-1556228578-8c89e6adf883?w=600&q=85" },
-  { n: "02", title: "Design Your Label", desc: "Upload your logo, choose your colors, pick your label style. Our automatic label rendering system applies your brand instantly — no Photoshop, no designers needed.", img: "https://images.unsplash.com/photo-1611080626919-7cf5a9dbab12?w=600&q=85" },
-  { n: "03", title: "Sell & We Ship", desc: "Publish to Shopify with one click. When a customer orders, we print your label, pack, and ship the product directly to them. You never touch a thing.", img: "https://images.unsplash.com/photo-1522338242992-e1a54906a8da?w=600&q=85" },
+  { n: "01", title: "Choose Your Products", desc: "Browse 18+ luxury beauty products — skincare, cosmetics, haircare. All reverse-engineered luxury formulas, ready to brand as your own.", img: "https://images.unsplash.com/photo-1596755389378-c31d21fd1273?w=600&q=85" },
+  { n: "02", title: "Design Your Label", desc: "Upload your logo, choose your colors, pick your label style. Our automatic label rendering system applies your brand instantly — no Photoshop, no designers needed.", img: "https://images.unsplash.com/photo-1561069934-eee225952461?w=600&q=85" },
+  { n: "03", title: "Sell & We Ship", desc: "Publish to Shopify with one click. When a customer orders, we print your label, pack, and ship the product directly to them. You never touch a thing.", img: "https://images.unsplash.com/photo-1512436991641-6745cdb1723f?w=600&q=85" },
 ];
 
 const TESTIMONIALS = [
