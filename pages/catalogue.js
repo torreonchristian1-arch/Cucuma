@@ -1,8 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
+import { createClient } from "@supabase/supabase-js";
 import SideNav from "../components/SideNav";
 import { PageHeader, Toast, EmptyState, StatusBadge } from "../components/Layout";
 import { useTheme } from "./_app";
+
+const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 
 const CATALOGUE = {
   All: [],
@@ -45,6 +48,19 @@ export default function Catalogue() {
   const [publishing, setPublishing] = useState(null);
   const [toast, setToast] = useState(null);
   const [imgErr, setImgErr] = useState({});
+
+  // Load published products from Supabase so state persists across navigation
+  useEffect(() => {
+    if (!shop) return;
+    supabase.from("published_products").select("cucuma_product_id, shopify_product_id").eq("shop_domain", shop)
+      .then(({ data }) => {
+        if (data) {
+          const map = {};
+          data.forEach(p => { map[p.cucuma_product_id] = `https://${shop}/admin/products/${p.shopify_product_id}`; });
+          setPublished(map);
+        }
+      });
+  }, [shop]);
 
   const products = CATALOGUE[cat].filter(p => !search || p.name.toLowerCase().includes(search.toLowerCase()) || p.desc.toLowerCase().includes(search.toLowerCase()));
 
