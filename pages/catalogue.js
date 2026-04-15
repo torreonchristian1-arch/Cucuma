@@ -6,7 +6,7 @@ import { useTheme } from "./_app";
 const CATALOGUE = {
   All: [],
   Skincare: [
-    { id: 1, name: "Rose Glow Serum", desc: "Vitamin C + Niacinamide brightening", price: "22.99", moq: 50, badge: "Bestseller", img: "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=400&q=80" },
+    { id: 1, name: "Rose Glow Serum", desc: "Vitamin C + Niacinamide brightening", price: "22.99", moq: 50, badge: "Bestseller", img: "https://ecqkxtxxmtwxhwydcevq.supabase.co/storage/v1/object/public/branding-assets/pszvvMNBTJaVnDojdiQkpw@2k.webp" },
     { id: 2, name: "Moisture Shield SPF50", desc: "Lightweight daily sunscreen + HA", price: "15.99", moq: 30, badge: "New", img: "https://images.unsplash.com/photo-1556228578-8c89e6adf883?w=400&q=80" },
     { id: 3, name: "Vitamin C Brightener", desc: "20% Vitamin C + ferulic acid serum", price: "25.99", moq: 25, badge: null, img: "https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b?w=400&q=80" },
     { id: 4, name: "Retinol Night Repair", desc: "0.3% retinol with ceramide complex", price: "29.99", moq: 20, badge: "Popular", img: "https://images.unsplash.com/photo-1571781926291-c477ebfd024b?w=400&q=80" },
@@ -14,7 +14,7 @@ const CATALOGUE = {
     { id: 6, name: "Pore Refining Clay Mask", desc: "Kaolin + charcoal deep cleanser", price: "12.19", moq: 35, badge: null, img: "https://images.unsplash.com/photo-1596755389378-c31d21fd1273?w=400&q=80" },
   ],
   Cosmetics: [
-    { id: 7, name: "Matte Lip Studio Kit", desc: "12-shade transfer-proof collection", price: "13.59", moq: 30, badge: "Bestseller", img: "https://images.unsplash.com/photo-1586495777744-4e6232bf4e45?w=400&q=80" },
+    { id: 7, name: "Matte Lip Studio Kit", desc: "12-shade transfer-proof collection", price: "13.59", moq: 30, badge: "Bestseller", img: "https://ecqkxtxxmtwxhwydcevq.supabase.co/storage/v1/object/public/branding-assets/rsdlZycFSbOXD4UeesaTtg@2k%20(1).webp" },
     { id: 8, name: "Glow Highlighter Palette", desc: "6-pan pressed pigment palette", price: "17.49", moq: 25, badge: null, img: "https://images.unsplash.com/photo-1512496015851-a90fb38ba796?w=400&q=80" },
     { id: 9, name: "Skin Tint Foundation", desc: "Buildable coverage skin tint SPF20", price: "19.69", moq: 20, badge: "New", img: "https://images.unsplash.com/photo-1522338242992-e1a54906a8da?w=400&q=80" },
     { id: 10, name: "Brow Define Pencil", desc: "Micro-tip brow pencil with spoolie", price: "7.49", moq: 50, badge: null, img: "https://images.unsplash.com/photo-1631730359585-38a4935cbec4?w=400&q=80" },
@@ -22,7 +22,7 @@ const CATALOGUE = {
     { id: 12, name: "Blush Duo Compact", desc: "Buildable powder blush in 2 shades", price: "11.59", moq: 30, badge: null, img: "https://images.unsplash.com/photo-1599733589046-833b12f81938?w=400&q=80" },
   ],
   Haircare: [
-    { id: 13, name: "Keratin Repair Mask", desc: "Deep conditioning for damaged hair", price: "37.49", moq: 20, badge: "Bestseller", img: "https://images.unsplash.com/photo-1535585209827-a15fcdbc4c2d?w=400&q=80" },
+    { id: 13, name: "Keratin Repair Mask", desc: "Deep conditioning for damaged hair", price: "37.49", moq: 20, badge: "Bestseller", img: "https://ecqkxtxxmtwxhwydcevq.supabase.co/storage/v1/object/public/branding-assets/iLEtWdoIRoq0erfniMRspg@2k.webp" },
     { id: 14, name: "Scalp Revival Serum", desc: "Caffeine + biotin scalp growth", price: "33.79", moq: 15, badge: "New", img: "https://images.unsplash.com/photo-1526045431048-f857369baa09?w=400&q=80" },
     { id: 15, name: "Argan Oil Treatment", desc: "Lightweight frizz-control argan oil", price: "17.49", moq: 25, badge: null, img: "https://images.unsplash.com/photo-1598440947619-2c35fc9aa908?w=400&q=80" },
     { id: 16, name: "Color Protect Shampoo", desc: "Sulfate-free color-safe cleanser", price: "11.59", moq: 30, badge: "Popular", img: "https://images.unsplash.com/photo-1585751119414-ef2636f8aede?w=400&q=80" },
