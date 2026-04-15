@@ -12,7 +12,7 @@ const STEPS = [
   {
     id: 1,
     title: "Welcome to Cucuma®",
-    subtitle: "Let's get your beauty brand set up in 3 easy steps.",
+    subtitle: "Launch your private label beauty brand on Shopify — automatic label rendering, zero inventory, automated fulfillment.",
     cta: "Get Started →",
     icon: (gold) => (
       <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke={gold} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -23,7 +23,7 @@ const STEPS = [
   {
     id: 2,
     title: "Browse Your Product Catalogue",
-    subtitle: "Choose from 18+ premium private label beauty products ready to publish to your store.",
+    subtitle: "Browse 18+ luxury beauty products — reverse-engineered luxury formulas ready to sell under your brand name.",
     cta: "Continue →",
     icon: (gold) => (
       <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke={gold} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -35,7 +35,7 @@ const STEPS = [
   {
     id: 3,
     title: "Design Your Brand Identity",
-    subtitle: "Upload your logo and choose your brand colors. Your identity will appear on every product label.",
+    subtitle: "Upload your logo, choose your colors. Our automatic label rendering system applies your brand — no Photoshop needed.",
     cta: "Continue →",
     icon: (gold) => (
       <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke={gold} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
