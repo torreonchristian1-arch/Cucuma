@@ -141,7 +141,7 @@ export default function Billing() {
           </div>
 
           {/* Plans Grid */}
-          <div className="plans-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 18, maxWidth: 900px, margin: "0 auto 36px" }}>
+          <div className="plans-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 18, maxWidth: 900, margin: "0 auto 36px" }}>
             {PLANS.map(plan => {
               const isCurrentPlan = currentPlan === plan.id;
               const displayPrice = plan.price
