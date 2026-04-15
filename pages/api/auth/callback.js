@@ -7,110 +7,67 @@ const supabase = createClient(
 );
 
 export default async function handler(req, res) {
-  const { shop, code, state, hmac } = req.query;
+  const { shop, hmac, code, state } = req.query;
 
-  const stateCookie = req.cookies?.shopify_oauth_state;
-  if (!state || state !== stateCookie) {
-    return res.status(403).json({ error: "State mismatch." });
-  }
-
+  // Validate HMAC
   const params = { ...req.query };
   delete params.hmac;
+  delete params.signature;
 
-  const message = Object.keys(params)
-    .sort()
-    .map((key) => `${key}=${params[key]}`)
-    .join("&");
+  const message = Object.keys(params).sort().map(k => `${k}=${params[k]}`).join("&");
+  const generatedHmac = crypto.createHmac("sha256", process.env.SHOPIFY_API_SECRET).update(message).digest("hex");
 
-  const generatedHash = crypto
-    .createHmac("sha256", process.env.SHOPIFY_API_SECRET)
-    .update(message)
-    .digest("hex");
-
-  if (generatedHash !== hmac) {
-    return res.status(401).json({ error: "HMAC validation failed." });
+  if (generatedHmac !== hmac) {
+    return res.status(403).send("Invalid HMAC");
   }
 
-  let access_token, scope;
-
+  // Exchange code for access token
+  let accessToken;
   try {
-    const tokenResponse = await fetch(
-      `https://${shop}/admin/oauth/access_token`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          client_id: process.env.SHOPIFY_API_KEY,
-          client_secret: process.env.SHOPIFY_API_SECRET,
-          code,
-        }),
-      }
-    );
-
-    const tokenData = await tokenResponse.json();
-
-    if (tokenData.error || !tokenData.access_token) {
-      return res.status(500).json({ error: "Failed to get access token." });
-    }
-
-    access_token = tokenData.access_token;
-    scope = tokenData.scope;
-
+    const tokenRes = await fetch(`https://${shop}/admin/oauth/access_token`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ client_id: process.env.SHOPIFY_API_KEY, client_secret: process.env.SHOPIFY_API_SECRET, code }),
+    });
+    const tokenData = await tokenRes.json();
+    accessToken = tokenData.access_token;
   } catch (err) {
-    return res.status(500).json({ error: "Network error during token exchange." });
+    return res.status(500).send("Token exchange failed");
   }
 
-  const { error: dbError } = await supabase
-    .from("merchants")
-    .upsert(
-      {
-        shop_domain: shop,
-        access_token,
-        scopes: scope,
-        installed_at: new Date().toISOString(),
-      },
-      { onConflict: "shop_domain" }
-    );
+  if (!accessToken) return res.status(400).send("No access token");
 
-  if (dbError) {
-    return res.status(500).json({ error: "Could not save merchant to database." });
-  }
+  // Check if new merchant
+  const { data: existing } = await supabase.from("merchants").select("shop_domain, onboarding_completed").eq("shop_domain", shop).single();
+  const isNewMerchant = !existing;
 
-  await registerWebhooks(shop, access_token);
+  // Save merchant
+  await supabase.from("merchants").upsert({
+    shop_domain: shop,
+    access_token: accessToken,
+    scopes: "read_products,write_products,read_orders,write_orders",
+    installed_at: new Date().toISOString(),
+    onboarding_completed: existing?.onboarding_completed || false,
+  }, { onConflict: "shop_domain" });
 
-  return res.redirect(`/dashboard?shop=${shop}`);
-}
-
-async function registerWebhooks(shop, accessToken) {
-  const webhookTopics = [
-    "orders/create",
-    "orders/fulfilled",
-    "orders/cancelled",
-    "products/update",
+  // Register webhooks (including GDPR)
+  const webhooks = [
+    "orders/create", "orders/fulfilled", "orders/cancelled",
+    "customers/data_request", "customers/redact", "shop/redact"
   ];
-
-  for (const topic of webhookTopics) {
-    const urlSafeTopic = topic.replace("/", "-");
+  for (const topic of webhooks) {
+    const path = topic.includes("customers") || topic.includes("shop/redact")
+      ? "gdpr" : `orders-${topic.split("/")[1]}`;
     try {
-      await fetch(
-        `https://${shop}/admin/api/${process.env.SHOPIFY_API_VERSION}/webhooks.json`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "X-Shopify-Access-Token": accessToken,
-          },
-          body: JSON.stringify({
-            webhook: {
-              topic,
-              address: `${process.env.HOST}/api/webhooks/${urlSafeTopic}`,
-              format: "json",
-            },
-          }),
-        }
-      );
-    } catch (err) {
-      console.error(`Webhook error for ${topic}:`, err);
-    }
+      await fetch(`https://${shop}/admin/api/2024-01/webhooks.json`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-Shopify-Access-Token": accessToken },
+        body: JSON.stringify({ webhook: { topic, address: `${process.env.HOST}/api/webhooks/${path}`, format: "json" } }),
+      });
+    } catch {}
   }
+
+  // New merchants → onboarding, existing → dashboard
+  const dest = isNewMerchant ? `/onboarding?shop=${shop}` : `/dashboard?shop=${shop}`;
+  return res.redirect(302, dest);
 }
