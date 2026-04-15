@@ -276,17 +276,24 @@ export default function Dashboard() {
                           const status = isReal ? (o.fulfillment_status || "unfulfilled") : o.status;
                           const orderId = isReal ? o.order_number : o.id;
                           const customer = isReal ? (o.customer_name || "Guest") : o.customer;
-                          const product = isReal ? (o.line_items ? (typeof o.line_items === "string" ? JSON.parse(o.line_items)[0]?.title : o.line_items[0]?.title) : "—") : o.product;
+                          let product = o.product || "—";
+                          if (isReal && o.line_items) {
+                            try {
+                              const items = typeof o.line_items === "string" ? JSON.parse(o.line_items) : o.line_items;
+                              product = items[0]?.title || "—";
+                            } catch {}
+                          }
                           const amount = isReal ? parseFloat(o.total_price || 0).toFixed(2) : o.amount;
                           return (
-                          <tr key={i} className="orow" style={{ borderBottom: `1px solid ${theme.borderSubtle}`, transition: "background 0.12s", cursor: "pointer" }} onClick={() => goTo("/orders")}>
-                            <td style={{ padding: "12px 16px", fontSize: 12, fontWeight: 600, color: theme.gold, fontFamily: "'JetBrains Mono', monospace" }}>{orderId}</td>
-                            <td style={{ padding: "12px 16px", fontSize: 13, color: theme.textPrimary, fontWeight: 500 }}>{customer}</td>
-                            <td style={{ padding: "12px 16px", fontSize: 12, color: theme.textSecondary }}>{product}</td>
-                            <td style={{ padding: "12px 16px", fontSize: 13, fontWeight: 600, color: theme.textPrimary, fontFamily: "'JetBrains Mono', monospace" }}>${amount}</td>
-                            <td style={{ padding: "12px 16px" }}><StatusBadge status={status} theme={theme} /></td>
-                          </tr>
-                        );})
+                            <tr key={i} className="orow" style={{ borderBottom: `1px solid ${theme.borderSubtle}`, transition: "background 0.12s", cursor: "pointer" }} onClick={() => goTo("/orders")}>
+                              <td style={{ padding: "12px 16px", fontSize: 12, fontWeight: 600, color: theme.gold, fontFamily: "'JetBrains Mono', monospace" }}>{orderId}</td>
+                              <td style={{ padding: "12px 16px", fontSize: 13, color: theme.textPrimary, fontWeight: 500 }}>{customer}</td>
+                              <td style={{ padding: "12px 16px", fontSize: 12, color: theme.textSecondary }}>{product}</td>
+                              <td style={{ padding: "12px 16px", fontSize: 13, fontWeight: 600, color: theme.textPrimary, fontFamily: "'JetBrains Mono', monospace" }}>${amount}</td>
+                              <td style={{ padding: "12px 16px" }}><StatusBadge status={status} theme={theme} /></td>
+                            </tr>
+                          );
+                        })}
                       </tbody>
                     </table>
                   </div>
