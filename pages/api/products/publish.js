@@ -60,13 +60,16 @@ export default async function handler(req, res) {
     product: {
       title: `${brandName} — ${product.name}`,
       body_html: `
-        <p><strong>${product.desc}</strong></p>
-        <p>${tagline}</p>
+        <p>${product.desc}</p>
+        <p>&nbsp;</p>
+        <p><strong>Key Benefits:</strong></p>
         <ul>
-          <li>Category: ${product.category}</li>
-          <li>Minimum Order: ${product.moq} units</li>
-          <li>Fulfilled by Cucuma®</li>
+          <li>Professional grade formula</li>
+          <li>Cruelty-free and dermatologist tested</li>
+          <li>Ships directly to your customers</li>
         </ul>
+        <p>&nbsp;</p>
+        <p><em>Fulfilled by ${brandName}</em></p>
       `,
       vendor: brandName,
       product_type: product.category,

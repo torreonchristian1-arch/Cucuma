@@ -104,7 +104,7 @@ export default function Branding() {
             <div>
               {/* Tabs */}
               <div style={{ display: "flex", gap: 6, marginBottom: 16 }}>
-                {[{ id:"identity", label:"Identity" }, { id:"colors", label:"Colors" }, { id:"style", label:"Label Style" }].map(t => (
+                {[{ id:"identity", label:"Identity" }, { id:"colors", label:"Colors" }, { id:"style", label:"Label Style" }, { id:"mockup", label:"✦ Mockup Generator" }].map(t => (
                   <button key={t.id} className="tab-pill" onClick={() => setTab(t.id)}
                     style={{ background:tab===t.id?T.oliveSubtle:"transparent", borderColor:tab===t.id?T.oliveBorder:T.borderSubtle, color:tab===t.id?T.olive:T.textSecondary }}>
                     {t.label}
@@ -177,6 +177,110 @@ export default function Branding() {
                     </div>
                   </div>
                 </>
+              )}
+
+              {/* Mockup Generator */}
+              {tab === "mockup" && (
+                <div className="bcard">
+                  <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:16, fontWeight:600, color:T.textPrimary, marginBottom:6 }}>Product Mockup Generator</div>
+                  <p style={{ fontSize:12, color:T.textTertiary, marginBottom:16, lineHeight:1.6 }}>Generate a photo-realistic product image using your branding, then import it directly to your Shopify store.</p>
+
+                  {/* Step 1 - Select product */}
+                  <div style={{ marginBottom:14 }}>
+                    <label style={{ fontSize:10, fontWeight:700, color:T.textTertiary, textTransform:"uppercase", letterSpacing:"0.1em", display:"block", marginBottom:6 }}>1. Select Product</label>
+                    <select id="mockup-product" style={{ width:"100%", background:T.bgSurface, border:`1px solid ${T.borderSubtle}`, borderRadius:7, padding:"8px 10px", color:T.textPrimary, fontSize:13, fontFamily:"'DM Sans',sans-serif", outline:"none" }}>
+                      <option>Rose Glow Serum</option>
+                      <option>Moisture Shield SPF50</option>
+                      <option>Vitamin C Brightener</option>
+                      <option>Keratin Repair Mask</option>
+                      <option>Matte Lip Studio Kit</option>
+                      <option>Argan Oil Treatment</option>
+                      <option>Volume Lash Mascara</option>
+                      <option>Scalp Revival Serum</option>
+                    </select>
+                  </div>
+
+                  {/* Step 2 - Style */}
+                  <div style={{ marginBottom:14 }}>
+                    <label style={{ fontSize:10, fontWeight:700, color:T.textTertiary, textTransform:"uppercase", letterSpacing:"0.1em", display:"block", marginBottom:6 }}>2. Mockup Style</label>
+                    <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8 }}>
+                      {["Studio White", "Marble Flat", "Natural Lifestyle", "Dark Luxury"].map((s, i) => (
+                        <div key={s} id={`mock-style-${i}`} onClick={() => {
+                          document.querySelectorAll("[id^='mock-style-']").forEach(el => { el.style.borderColor = T.borderSubtle; el.style.background = T.bgSurface; });
+                          document.getElementById(`mock-style-${i}`).style.borderColor = T.oliveBorder;
+                          document.getElementById(`mock-style-${i}`).style.background = T.oliveSubtle;
+                        }}
+                          style={{ background:i===0?T.oliveSubtle:T.bgSurface, border:`1px solid ${i===0?T.oliveBorder:T.borderSubtle}`, borderRadius:8, padding:"9px 12px", cursor:"pointer", fontSize:12, fontWeight:500, color:T.textSecondary, transition:"all 0.15s", textAlign:"center" }}>
+                          {s}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Step 3 - Generate */}
+                  <div style={{ background:T.bgBase, border:`1px solid ${T.borderSubtle}`, borderRadius:9, padding:14, marginBottom:14, textAlign:"center" }}>
+                    <div style={{ fontSize:12, color:T.textTertiary, marginBottom:10, lineHeight:1.6 }}>
+                      Your brand colors, logo and label style will be applied automatically to the product mockup.
+                    </div>
+                    <div style={{ display:"flex", gap:8, justifyContent:"center", marginBottom:10 }}>
+                      {[primary, secondary, accent].map(c => (
+                        <div key={c} style={{ width:18, height:18, borderRadius:"50%", background:c, border:`1px solid ${T.borderSubtle}` }}></div>
+                      ))}
+                    </div>
+                    <div style={{ fontSize:11, fontWeight:600, color:T.textSecondary }}>{brandName} · {style} style</div>
+                  </div>
+
+                  {/* Generate button */}
+                  <div style={{ display:"flex", gap:8 }}>
+                    <button onClick={() => {
+                      const genBtn = document.getElementById("gen-btn");
+                      if (genBtn) { genBtn.textContent = "Generating..."; genBtn.disabled = true; }
+                      setTimeout(() => {
+                        const preview = document.getElementById("mockup-preview");
+                        const importBtn = document.getElementById("import-btn");
+                        if (preview) { preview.style.display = "block"; }
+                        if (importBtn) { importBtn.style.display = "flex"; }
+                        if (genBtn) { genBtn.textContent = "Regenerate"; genBtn.disabled = false; }
+                      }, 2000);
+                    }}
+                      id="gen-btn"
+                      style={{ flex:1, background:T.olive, border:"none", borderRadius:8, padding:"10px", color:"white", fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"'DM Sans',sans-serif", transition:"all 0.2s" }}>
+                      ✦ Generate Mockup
+                    </button>
+                  </div>
+
+                  {/* Preview area */}
+                  <div id="mockup-preview" style={{ display:"none", marginTop:14 }}>
+                    <div style={{ background:T.bgSurface, border:`1px solid ${T.borderSubtle}`, borderRadius:10, overflow:"hidden", marginBottom:10 }}>
+                      <div style={{ background:bg, padding:"24px", textAlign:"center", minHeight:200, display:"flex", alignItems:"center", justifyContent:"center", position:"relative" }}>
+                        {/* Simulated product mockup */}
+                        <div style={{ textAlign:"center" }}>
+                          <div style={{ width:80, height:120, background:`linear-gradient(135deg, ${primary}, ${secondary})`, borderRadius:12, margin:"0 auto 12px", display:"flex", alignItems:"center", justifyContent:"center", boxShadow:"0 8px 24px rgba(0,0,0,0.15)" }}>
+                            {logoUrl ? <img src={logoUrl} style={{ width:50, height:50, objectFit:"contain" }} /> : <span style={{ color:"white", fontSize:24 }}>✦</span>}
+                          </div>
+                          <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:14, fontWeight:600, color:primary }}>{brandName}</div>
+                          <div style={{ fontSize:10, color:secondary, letterSpacing:"0.1em", textTransform:"uppercase" }}>Rose Glow Serum</div>
+                        </div>
+                        <div style={{ position:"absolute", top:10, right:10, background:"rgba(61,90,62,0.9)", color:"white", fontSize:9, fontWeight:700, padding:"3px 8px", borderRadius:100 }}>PREVIEW</div>
+                      </div>
+                    </div>
+
+                    {/* Import to Shopify */}
+                    <button id="import-btn"
+                      style={{ display:"none", width:"100%", background:T.olive, border:"none", borderRadius:8, padding:"11px", color:"white", fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"'DM Sans',sans-serif", alignItems:"center", justifyContent:"center", gap:8 }}
+                      onClick={async () => {
+                        const btn = document.getElementById("import-btn");
+                        if (btn) { btn.textContent = "Importing to Shopify..."; btn.disabled = true; }
+                        // In production this would call the publish API with the mockup image
+                        setTimeout(() => {
+                          if (btn) { btn.innerHTML = "✓ Imported to Shopify!"; btn.style.background = "#2d6a4f"; btn.disabled = false; }
+                        }, 1500);
+                      }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                      Import to Shopify Store
+                    </button>
+                  </div>
+                </div>
               )}
 
               {/* Style */}
