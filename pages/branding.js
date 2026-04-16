@@ -295,16 +295,54 @@ Respond ONLY with this JSON (no markdown):
 
                   {mockupResult && (
                     <div style={{ background:T.bgBase, border:`1px solid ${T.oliveBorder}`, borderRadius:10, padding:14 }}>
-                      {/* Preview */}
-                      <div style={{ background:bg, borderRadius:10, padding:"20px", textAlign:"center", marginBottom:12, position:"relative", minHeight:160, display:"flex", alignItems:"center", justifyContent:"center" }}>
-                        <div>
-                          <div style={{ width:60, height:95, background:`linear-gradient(135deg,${primary},${secondary})`, borderRadius:8, margin:"0 auto 8px", display:"flex", alignItems:"center", justifyContent:"center", boxShadow:`0 6px 20px ${primary}40` }}>
-                            {logoUrl?<img src={logoUrl} style={{ width:38, height:38, objectFit:"contain" }} />:<span style={{ color:"white", fontSize:18, opacity:0.9 }}>✦</span>}
+                      {/* Bottle Mockup Preview */}
+                      <div style={{ background:`linear-gradient(135deg, ${bg} 0%, ${accent}40 100%)`, borderRadius:10, padding:"24px", textAlign:"center", marginBottom:12, position:"relative", minHeight:200, display:"flex", alignItems:"center", justifyContent:"center" }}>
+                        <div style={{ position:"relative", display:"inline-block" }}>
+                          {/* Bottle shape */}
+                          <svg width="90" height="140" viewBox="0 0 90 140" style={{ filter:`drop-shadow(0 8px 20px ${primary}50)` }}>
+                            {/* Bottle body */}
+                            <defs>
+                              <linearGradient id="bottleGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" stopColor={secondary} stopOpacity="0.8"/>
+                                <stop offset="40%" stopColor={primary}/>
+                                <stop offset="100%" stopColor={secondary} stopOpacity="0.9"/>
+                              </linearGradient>
+                              <linearGradient id="capGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stopColor="#e8e0d4"/>
+                                <stop offset="100%" stopColor="#c4b8a8"/>
+                              </linearGradient>
+                              <linearGradient id="shineGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" stopColor="white" stopOpacity="0.25"/>
+                                <stop offset="50%" stopColor="white" stopOpacity="0.08"/>
+                                <stop offset="100%" stopColor="white" stopOpacity="0"/>
+                              </linearGradient>
+                            </defs>
+                            {/* Cap */}
+                            <rect x="28" y="2" width="34" height="22" rx="4" fill="url(#capGrad)"/>
+                            <rect x="32" y="18" width="26" height="6" rx="2" fill="#a89880"/>
+                            {/* Neck */}
+                            <rect x="33" y="22" width="24" height="12" rx="2" fill="url(#bottleGrad)"/>
+                            {/* Shoulder */}
+                            <path d="M25 34 Q20 38 18 46 L72 46 Q70 38 65 34 Z" fill="url(#bottleGrad)"/>
+                            {/* Body */}
+                            <rect x="18" y="46" width="54" height="80" rx="6" fill="url(#bottleGrad)"/>
+                            {/* Label area */}
+                            <rect x="22" y="55" width="46" height="60" rx="3" fill={bg} fillOpacity="0.92"/>
+                            {/* Shine */}
+                            <rect x="18" y="46" width="54" height="80" rx="6" fill="url(#shineGrad)"/>
+                          </svg>
+                          {/* Brand label overlay on bottle */}
+                          <div style={{ position:"absolute", top:"52%", left:"50%", transform:"translate(-50%,-50%)", width:42, textAlign:"center" }}>
+                            {logoUrl
+                              ? <img src={logoUrl} style={{ width:24, height:24, objectFit:"contain", margin:"0 auto 3px", display:"block" }} />
+                              : <div style={{ width:20, height:20, borderRadius:"50%", background:`linear-gradient(135deg,${primary},${secondary})`, margin:"0 auto 3px", display:"flex", alignItems:"center", justifyContent:"center" }}><span style={{ color:"white", fontSize:9 }}>✦</span></div>
+                            }
+                            <div style={{ fontFamily:"Georgia,serif", fontSize:6, fontWeight:700, color:primary, lineHeight:1.2, letterSpacing:"0.04em" }}>{brandName}</div>
+                            <div style={{ fontSize:4, color:secondary, letterSpacing:"0.08em", textTransform:"uppercase", marginTop:1, opacity:0.8 }}>{selectedProduct.slice(0,14)}</div>
                           </div>
-                          <div style={{ fontFamily:"Georgia,serif", fontSize:10, fontWeight:600, color:primary }}>{brandName}</div>
-                          <div style={{ fontSize:8, color:secondary, textTransform:"uppercase", letterSpacing:"0.1em", marginTop:2 }}>{selectedProduct}</div>
                         </div>
-                        <div style={{ position:"absolute", top:6, right:6, background:"rgba(61,90,62,0.9)", color:"white", fontSize:8, fontWeight:700, padding:"2px 6px", borderRadius:100 }}>AI PREVIEW</div>
+                        <div style={{ position:"absolute", top:6, right:6, background:"rgba(61,90,62,0.9)", color:"white", fontSize:8, fontWeight:700, padding:"2px 6px", borderRadius:100 }}>BOTTLE PREVIEW</div>
+                        <div style={{ position:"absolute", bottom:8, left:0, right:0, textAlign:"center", fontSize:9, color:secondary, opacity:0.7 }}>{finish} finish · {mockupStyle}</div>
                       </div>
 
                       <div style={{ marginBottom:10 }}>
