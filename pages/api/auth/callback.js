@@ -70,4 +70,4 @@ export default async function handler(req, res) {
   // New merchants → onboarding, existing → dashboard
   const dest = isNewMerchant ? `/onboarding?shop=${shop}` : `/dashboard?shop=${shop}`;
   return res.redirect(302, dest);
-}
+} 

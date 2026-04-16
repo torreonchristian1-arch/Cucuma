@@ -14,7 +14,21 @@ const PALETTES = [
   { name: "Ocean Blue", primary: "#1565c0", secondary: "#0d47a1", accent: "#e3f2fd", bg: "#f5f9ff" },
   { name: "Lavender", primary: "#7b1fa2", secondary: "#6a1b9a", accent: "#f3e5f5", bg: "#fdf5ff" },
   { name: "Coral", primary: "#e64a19", secondary: "#bf360c", accent: "#fbe9e7", bg: "#fff8f6" },
+  { name: "Midnight", primary: "#1a1a2e", secondary: "#16213e", accent: "#e2d9f3", bg: "#f8f7ff" },
+  { name: "Peach Glow", primary: "#ff6b6b", secondary: "#ee5a24", accent: "#ffeaa7", bg: "#fffbf5" },
 ];
+
+const PRODUCTS = [
+  "Rose Glow Serum", "Moisture Shield SPF50", "Vitamin C Brightener",
+  "Retinol Night Repair", "Hydra Boost Toner", "Pore Refining Clay Mask",
+  "Matte Lip Studio Kit", "Glow Highlighter Palette", "Skin Tint Foundation",
+  "Keratin Repair Mask", "Scalp Revival Serum", "Argan Oil Treatment",
+];
+
+const LABEL_STYLES = ["Modern", "Classic", "Minimal", "Bold", "Elegant", "Natural"];
+const FINISHES = ["Matte", "Glossy", "Metallic", "Frosted", "Textured"];
+const LAYOUTS = ["Centered", "Left-aligned", "Top banner", "Wrap-around", "Minimalist"];
+const FONTS = ["Serif Elegant", "Sans Modern", "Script Luxury", "Bold Impact", "Clean Minimal"];
 
 export default function Branding() {
   const router = useRouter();
@@ -30,11 +44,23 @@ export default function Branding() {
   const [accent, setAccent] = useState("#f5e6d0");
   const [bg, setBg] = useState("#faf6f0");
   const [style, setStyle] = useState("Modern");
+  const [finish, setFinish] = useState("Matte");
+  const [layout, setLayout] = useState("Centered");
+  const [font, setFont] = useState("Serif Elegant");
   const [logoUrl, setLogoUrl] = useState(null);
   const [logoFile, setLogoFile] = useState(null);
   const [saving, setSaving] = useState(false);
   const [drag, setDrag] = useState(false);
   const [toast, setToast] = useState(null);
+  const [selectedProduct, setSelectedProduct] = useState(PRODUCTS[0]);
+  const [mockupStyle, setMockupStyle] = useState("Studio White");
+  const [generating, setGenerating] = useState(false);
+  const [mockupResult, setMockupResult] = useState(null);
+  const [importing, setImporting] = useState(false);
+  const [importDone, setImportDone] = useState(false);
+  const [aiProduct, setAiProduct] = useState(PRODUCTS[0]);
+  const [aiGenerating, setAiGenerating] = useState(false);
+  const [aiResult, setAiResult] = useState(null);
 
   useEffect(() => {
     if (!shop) return;
@@ -68,43 +94,112 @@ export default function Branding() {
       const { error } = await supabase.storage.from("branding-assets").upload(name, logoFile, { upsert: true });
       if (!error) finalLogo = supabase.storage.from("branding-assets").getPublicUrl(name).data.publicUrl;
     }
-    const { error } = await supabase.from("branding").upsert({ shop_domain: shop, brand_name: brandName, tagline, primary_color: primary, secondary_color: secondary, accent_color: accent, bg_color: bg, label_style: style, logo_url: finalLogo, updated_at: new Date().toISOString() }, { onConflict: "shop_domain" });
+    const { error } = await supabase.from("branding").upsert({
+      shop_domain: shop, brand_name: brandName, tagline,
+      primary_color: primary, secondary_color: secondary,
+      accent_color: accent, bg_color: bg, label_style: style,
+      logo_url: finalLogo, updated_at: new Date().toISOString()
+    }, { onConflict: "shop_domain" });
     setSaving(false);
     if (!error) setToast({ msg: "Branding saved!", type: "success" });
-    else setToast({ msg: "Failed to save. Please try again.", type: "error" });
+    else setToast({ msg: "Failed to save.", type: "error" });
     setTimeout(() => setToast(null), 3000);
+  }
+
+  async function generateMockup() {
+    setGenerating(true);
+    setMockupResult(null);
+    setImportDone(false);
+    const prompt = `You are a luxury beauty product mockup designer. Generate a detailed mockup description for:
+Brand: ${brandName}, Tagline: ${tagline}, Product: ${selectedProduct}, Label Style: ${style}, Finish: ${finish}, Layout: ${layout}, Font: ${font}, Primary Color: ${primary}, Background: ${mockupStyle}
+
+Respond ONLY with this JSON (no markdown, no extra text):
+{"description":"2 sentence vivid mockup description","ideogramPrompt":"detailed Ideogram AI prompt for photorealistic product mockup","retailPrice":49.99,"wholesalePrice":22.99,"margin":54}`;
+    try {
+      const response = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 1000, messages: [{ role: "user", content: prompt }] })
+      });
+      const data = await response.json();
+      const text = data.content?.[0]?.text || "";
+      try {
+        setMockupResult(JSON.parse(text.replace(/```json|```/g, "").trim()));
+      } catch {
+        setMockupResult({ description: text.slice(0, 200), ideogramPrompt: `Luxury ${selectedProduct} mockup with ${brandName} branding, ${style} label, ${finish} finish, ${mockupStyle} background, photorealistic beauty photography`, retailPrice: 49.99, wholesalePrice: 22.99, margin: 54 });
+      }
+    } catch { setToast({ msg: "Generation failed.", type: "error" }); }
+    setGenerating(false);
+  }
+
+  async function generateCatalogue() {
+    setAiGenerating(true);
+    setAiResult(null);
+    const prompt = `You are a luxury beauty brand copywriter for ${brandName}. Generate product content for: ${aiProduct}
+
+Respond ONLY with this JSON (no markdown):
+{"title":"${brandName} ${aiProduct}","shortDesc":"one line description max 10 words","fullDesc":"compelling 2-3 sentence Shopify listing description","keyBenefits":["benefit 1","benefit 2","benefit 3","benefit 4"],"ingredients":["ingredient 1","ingredient 2","ingredient 3"],"suggestedRetailPrice":49.99,"wholesaleCost":22.99,"profitMargin":54,"tags":["tag1","tag2","tag3","tag4","tag5"],"seoTitle":"SEO title under 60 chars","seoDescription":"SEO description under 160 chars"}`;
+    try {
+      const response = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 1000, messages: [{ role: "user", content: prompt }] })
+      });
+      const data = await response.json();
+      const text = data.content?.[0]?.text || "";
+      try { setAiResult(JSON.parse(text.replace(/```json|```/g, "").trim())); }
+      catch { setAiResult({ fullDesc: text, suggestedRetailPrice: 49.99, wholesaleCost: 22.99, profitMargin: 54 }); }
+    } catch { setToast({ msg: "AI generation failed.", type: "error" }); }
+    setAiGenerating(false);
+  }
+
+  async function importToShopify() {
+    if (!mockupResult || !shop) return;
+    setImporting(true);
+    try {
+      await fetch("/api/products/publish", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ shop, product: { id: Date.now(), name: selectedProduct, desc: mockupResult.description || selectedProduct, price: String(mockupResult.wholesalePrice || "22.99"), category: "Skincare", moq: 30 } })
+      });
+      setImportDone(true);
+      setToast({ msg: `${selectedProduct} imported to Shopify!`, type: "success" });
+    } catch { setToast({ msg: "Import failed.", type: "error" }); }
+    setImporting(false);
   }
 
   return (
     <div style={{ display: "flex", height: "100vh", background: T.bgBase, overflow: "hidden" }}>
       <style>{`
-        input{outline:none;}
-        input[type="color"]{cursor:pointer;border:none;background:none;padding:0;}
-        .tab-pill{padding:7px 16px;border-radius:100px;font-size:13px;font-weight:500;cursor:pointer;transition:all 0.15s;border:1px solid;font-family:'DM Sans',sans-serif;background:none;}
-        .bcard{background:${T.bgCard};border:1px solid ${T.borderSubtle};border-radius:12px;padding:18px;box-shadow:${T.shadow};margin-bottom:12px;}
-        .pal-item:hover{border-color:${T.oliveBorder}!important;background:${T.oliveSubtle}!important;}
-        @keyframes toastIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+        input, select { outline: none; }
+        input[type="color"] { cursor:pointer; border:none; background:none; padding:0; }
+        .tab-pill { padding:7px 16px; border-radius:100px; font-size:13px; font-weight:500; cursor:pointer; transition:all 0.15s; border:1px solid; font-family:'DM Sans',sans-serif; background:none; }
+        .bcard { background:${T.bgCard}; border:1px solid ${T.borderSubtle}; border-radius:12px; padding:18px; box-shadow:${T.shadow}; margin-bottom:12px; }
+        .opt-btn { padding:8px 12px; border-radius:8px; font-size:12px; font-weight:500; cursor:pointer; transition:all 0.15s; border:1px solid; font-family:'DM Sans',sans-serif; background:none; text-align:center; }
+        .opt-btn.sel { background:${T.oliveSubtle}; border-color:${T.oliveBorder}; color:${T.olive}; }
+        .opt-btn:not(.sel) { background:${T.bgSurface}; border-color:${T.borderSubtle}; color:${T.textSecondary}; }
+        .pal-item { background:${T.bgSurface}; border:1px solid ${T.borderSubtle}; border-radius:8px; padding:10px; cursor:pointer; transition:all 0.15s; }
+        .pal-item:hover { border-color:${T.oliveBorder}; background:${T.oliveSubtle}; }
+        @keyframes spin { to{transform:rotate(360deg);} }
+        @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.5;} }
+        .ai-pulse { animation:pulse 1.5s ease-in-out infinite; }
         @media(max-width:900px){.blayout{grid-template-columns:1fr!important;}}
-        @media(max-width:768px){.hdr{padding:10px 16px 10px 52px!important;}.mpad{padding:16px!important;}.cgrid{grid-template-columns:1fr 1fr!important;}.pgrid{grid-template-columns:repeat(3,1fr)!important;}.hide-mobile{display:none!important;}}
+        @media(max-width:768px){.mpad{padding:16px!important;} .cgrid{grid-template-columns:1fr 1fr!important;} .hide-mobile{display:none!important;}}
       `}</style>
 
       {toast && <Toast message={toast.msg} type={toast.type} onClose={() => setToast(null)} />}
       <SideNav active="branding" shop={shop} open={open} />
       <main style={{ flex: 1, overflow: "auto" }}>
-        <PageHeader title="Brand Customisation" subtitle="Design your private label identity" onMenuToggle={() => setOpen(!open)}
-          actions={
-            <button onClick={save} disabled={saving} style={{ background:T.olive, border:"none", borderRadius:8, padding:"8px 18px", color:"white", fontSize:13, fontWeight:600, cursor:"pointer", transition:"all 0.2s", fontFamily:"'DM Sans',sans-serif", opacity:saving?0.7:1 }}>
-              {saving ? "Saving..." : "Save Branding"}
-            </button>
-          }
+        <PageHeader title="Brand Studio" subtitle="Design your identity, generate mockups & AI content"
+          onMenuToggle={() => setOpen(!open)}
+          actions={<button onClick={save} disabled={saving} style={{ background:T.olive, border:"none", borderRadius:8, padding:"8px 18px", color:"white", fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"'DM Sans',sans-serif", opacity:saving?0.7:1 }}>{saving?"Saving...":"Save Branding"}</button>}
         />
-
         <div className="mpad" style={{ padding: "18px 24px" }}>
-          <div className="blayout" style={{ display: "grid", gridTemplateColumns: "1fr 300px", gap: 16 }}>
+          <div className="blayout" style={{ display: "grid", gridTemplateColumns: "1fr 290px", gap: 16 }}>
             <div>
               {/* Tabs */}
-              <div style={{ display: "flex", gap: 6, marginBottom: 16 }}>
-                {[{ id:"identity", label:"Identity" }, { id:"colors", label:"Colors" }, { id:"style", label:"Label Style" }, { id:"mockup", label:"✦ Mockup Generator" }].map(t => (
+              <div style={{ display:"flex", gap:6, marginBottom:16, flexWrap:"wrap" }}>
+                {[{id:"identity",label:"Identity"},{id:"colors",label:"Colors"},{id:"style",label:"Label Style"},{id:"mockup",label:"✦ Mockup Generator"},{id:"ai",label:"🤖 AI Catalogue"}].map(t => (
                   <button key={t.id} className="tab-pill" onClick={() => setTab(t.id)}
                     style={{ background:tab===t.id?T.oliveSubtle:"transparent", borderColor:tab===t.id?T.oliveBorder:T.borderSubtle, color:tab===t.id?T.olive:T.textSecondary }}>
                     {t.label}
@@ -112,211 +207,194 @@ export default function Branding() {
                 ))}
               </div>
 
-              {/* Identity */}
-              {tab === "identity" && (
-                <>
-                  <div className="bcard">
-                    <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:16, fontWeight:600, color:T.textPrimary, marginBottom:14 }}>Logo Upload</div>
-                    <div onDrop={e => { e.preventDefault(); setDrag(false); pickFile(e.dataTransfer.files[0]); }} onDragOver={e => { e.preventDefault(); setDrag(true); }} onDragLeave={() => setDrag(false)} onClick={() => fileRef.current?.click()}
-                      style={{ border:`2px dashed ${drag?T.olive:T.borderDefault}`, borderRadius:10, padding:"28px 20px", textAlign:"center", cursor:"pointer", background:drag?T.oliveSubtle:T.bgSurface, transition:"all 0.2s" }}>
-                      {logoUrl ? (
-                        <div><img src={logoUrl} alt="logo" style={{ maxHeight:64, maxWidth:180, objectFit:"contain", margin:"0 auto 8px" }} /><div style={{ fontSize:12, color:T.textTertiary }}>Click to change</div></div>
-                      ) : (
-                        <div>
-                          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={T.textTertiary} strokeWidth="1.5" style={{ margin:"0 auto 10px" }}><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                          <div style={{ fontSize:13, fontWeight:500, color:T.textSecondary, marginBottom:4 }}>Drop your logo here or click to upload</div>
-                          <div style={{ fontSize:11, color:T.textTertiary }}>PNG, JPG, SVG — max 2MB</div>
-                        </div>
-                      )}
-                      <input ref={fileRef} type="file" accept="image/*" style={{ display:"none" }} onChange={e => pickFile(e.target.files[0])} />
-                    </div>
-                  </div>
-                  <div className="bcard">
-                    <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:16, fontWeight:600, color:T.textPrimary, marginBottom:14 }}>Brand Identity</div>
-                    <div style={{ marginBottom:12 }}>
-                      <label style={{ fontSize:10, fontWeight:700, color:T.textTertiary, textTransform:"uppercase", letterSpacing:"0.1em", display:"block", marginBottom:6 }}>Brand Name</label>
-                      <input value={brandName} onChange={e => setBrandName(e.target.value)} style={{ width:"100%", background:T.bgSurface, border:`1px solid ${T.borderSubtle}`, borderRadius:8, padding:"9px 12px", color:T.textPrimary, fontSize:14 }} />
-                    </div>
-                    <div>
-                      <label style={{ fontSize:10, fontWeight:700, color:T.textTertiary, textTransform:"uppercase", letterSpacing:"0.1em", display:"block", marginBottom:6 }}>Tagline</label>
-                      <input value={tagline} onChange={e => setTagline(e.target.value)} style={{ width:"100%", background:T.bgSurface, border:`1px solid ${T.borderSubtle}`, borderRadius:8, padding:"9px 12px", color:T.textPrimary, fontSize:14 }} />
-                    </div>
-                  </div>
-                </>
-              )}
-
-              {/* Colors */}
-              {tab === "colors" && (
-                <>
-                  <div className="bcard">
-                    <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:16, fontWeight:600, color:T.textPrimary, marginBottom:14 }}>Brand Colors</div>
-                    <div className="cgrid" style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
-                      {[{ label:"Primary", val:primary, set:setPrimary }, { label:"Secondary", val:secondary, set:setSecondary }, { label:"Accent", val:accent, set:setAccent }, { label:"Background", val:bg, set:setBg }].map(c => (
-                        <div key={c.label}>
-                          <label style={{ fontSize:10, fontWeight:700, color:T.textTertiary, textTransform:"uppercase", letterSpacing:"0.1em", display:"block", marginBottom:6 }}>{c.label}</label>
-                          <div style={{ display:"flex", alignItems:"center", gap:8, background:T.bgSurface, border:`1px solid ${T.borderSubtle}`, borderRadius:8, padding:"7px 10px" }}>
-                            <div style={{ position:"relative", width:28, height:28, borderRadius:6, overflow:"hidden", flexShrink:0 }}>
-                              <input type="color" value={c.val} onChange={e => c.set(e.target.value)} style={{ position:"absolute", inset:"-4px", width:"calc(100% + 8px)", height:"calc(100% + 8px)" }} />
-                            </div>
-                            <input value={c.val} onChange={e => c.set(e.target.value)} style={{ background:"none", border:"none", color:T.textSecondary, fontSize:12, fontFamily:"monospace", flex:1 }} />
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="bcard">
-                    <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:16, fontWeight:600, color:T.textPrimary, marginBottom:12 }}>Preset Palettes</div>
-                    <div className="pgrid" style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:8 }}>
-                      {PALETTES.map(p => (
-                        <div key={p.name} className="pal-item" onClick={() => { setPrimary(p.primary); setSecondary(p.secondary); setAccent(p.accent); setBg(p.bg); }}
-                          style={{ background:T.bgSurface, border:`1px solid ${T.borderSubtle}`, borderRadius:8, padding:"10px", cursor:"pointer", transition:"all 0.15s" }}>
-                          <div style={{ display:"flex", gap:3, marginBottom:6 }}>{[p.primary, p.secondary, p.accent].map(c => <div key={c} style={{ width:12, height:12, borderRadius:"50%", background:c }} />)}</div>
-                          <div style={{ fontSize:10, fontWeight:600, color:T.textSecondary }}>{p.name}</div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </>
-              )}
-
-              {/* Mockup Generator */}
-              {tab === "mockup" && (
+              {/* IDENTITY */}
+              {tab==="identity" && (<>
                 <div className="bcard">
-                  <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:16, fontWeight:600, color:T.textPrimary, marginBottom:6 }}>Product Mockup Generator</div>
-                  <p style={{ fontSize:12, color:T.textTertiary, marginBottom:16, lineHeight:1.6 }}>Generate a photo-realistic product image using your branding, then import it directly to your Shopify store.</p>
-
-                  {/* Step 1 - Select product */}
-                  <div style={{ marginBottom:14 }}>
-                    <label style={{ fontSize:10, fontWeight:700, color:T.textTertiary, textTransform:"uppercase", letterSpacing:"0.1em", display:"block", marginBottom:6 }}>1. Select Product</label>
-                    <select id="mockup-product" style={{ width:"100%", background:T.bgSurface, border:`1px solid ${T.borderSubtle}`, borderRadius:7, padding:"8px 10px", color:T.textPrimary, fontSize:13, fontFamily:"'DM Sans',sans-serif", outline:"none" }}>
-                      <option>Rose Glow Serum</option>
-                      <option>Moisture Shield SPF50</option>
-                      <option>Vitamin C Brightener</option>
-                      <option>Keratin Repair Mask</option>
-                      <option>Matte Lip Studio Kit</option>
-                      <option>Argan Oil Treatment</option>
-                      <option>Volume Lash Mascara</option>
-                      <option>Scalp Revival Serum</option>
-                    </select>
-                  </div>
-
-                  {/* Step 2 - Style */}
-                  <div style={{ marginBottom:14 }}>
-                    <label style={{ fontSize:10, fontWeight:700, color:T.textTertiary, textTransform:"uppercase", letterSpacing:"0.1em", display:"block", marginBottom:6 }}>2. Mockup Style</label>
-                    <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8 }}>
-                      {["Studio White", "Marble Flat", "Natural Lifestyle", "Dark Luxury"].map((s, i) => (
-                        <div key={s} id={`mock-style-${i}`} onClick={() => {
-                          document.querySelectorAll("[id^='mock-style-']").forEach(el => { el.style.borderColor = T.borderSubtle; el.style.background = T.bgSurface; });
-                          document.getElementById(`mock-style-${i}`).style.borderColor = T.oliveBorder;
-                          document.getElementById(`mock-style-${i}`).style.background = T.oliveSubtle;
-                        }}
-                          style={{ background:i===0?T.oliveSubtle:T.bgSurface, border:`1px solid ${i===0?T.oliveBorder:T.borderSubtle}`, borderRadius:8, padding:"9px 12px", cursor:"pointer", fontSize:12, fontWeight:500, color:T.textSecondary, transition:"all 0.15s", textAlign:"center" }}>
-                          {s}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Step 3 - Generate */}
-                  <div style={{ background:T.bgBase, border:`1px solid ${T.borderSubtle}`, borderRadius:9, padding:14, marginBottom:14, textAlign:"center" }}>
-                    <div style={{ fontSize:12, color:T.textTertiary, marginBottom:10, lineHeight:1.6 }}>
-                      Your brand colors, logo and label style will be applied automatically to the product mockup.
-                    </div>
-                    <div style={{ display:"flex", gap:8, justifyContent:"center", marginBottom:10 }}>
-                      {[primary, secondary, accent].map(c => (
-                        <div key={c} style={{ width:18, height:18, borderRadius:"50%", background:c, border:`1px solid ${T.borderSubtle}` }}></div>
-                      ))}
-                    </div>
-                    <div style={{ fontSize:11, fontWeight:600, color:T.textSecondary }}>{brandName} · {style} style</div>
-                  </div>
-
-                  {/* Generate button */}
-                  <div style={{ display:"flex", gap:8 }}>
-                    <button onClick={() => {
-                      const genBtn = document.getElementById("gen-btn");
-                      if (genBtn) { genBtn.textContent = "Generating..."; genBtn.disabled = true; }
-                      setTimeout(() => {
-                        const preview = document.getElementById("mockup-preview");
-                        const importBtn = document.getElementById("import-btn");
-                        if (preview) { preview.style.display = "block"; }
-                        if (importBtn) { importBtn.style.display = "flex"; }
-                        if (genBtn) { genBtn.textContent = "Regenerate"; genBtn.disabled = false; }
-                      }, 2000);
-                    }}
-                      id="gen-btn"
-                      style={{ flex:1, background:T.olive, border:"none", borderRadius:8, padding:"10px", color:"white", fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"'DM Sans',sans-serif", transition:"all 0.2s" }}>
-                      ✦ Generate Mockup
-                    </button>
-                  </div>
-
-                  {/* Preview area */}
-                  <div id="mockup-preview" style={{ display:"none", marginTop:14 }}>
-                    <div style={{ background:T.bgSurface, border:`1px solid ${T.borderSubtle}`, borderRadius:10, overflow:"hidden", marginBottom:10 }}>
-                      <div style={{ background:bg, padding:"24px", textAlign:"center", minHeight:200, display:"flex", alignItems:"center", justifyContent:"center", position:"relative" }}>
-                        {/* Simulated product mockup */}
-                        <div style={{ textAlign:"center" }}>
-                          <div style={{ width:80, height:120, background:`linear-gradient(135deg, ${primary}, ${secondary})`, borderRadius:12, margin:"0 auto 12px", display:"flex", alignItems:"center", justifyContent:"center", boxShadow:"0 8px 24px rgba(0,0,0,0.15)" }}>
-                            {logoUrl ? <img src={logoUrl} style={{ width:50, height:50, objectFit:"contain" }} /> : <span style={{ color:"white", fontSize:24 }}>✦</span>}
-                          </div>
-                          <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:14, fontWeight:600, color:primary }}>{brandName}</div>
-                          <div style={{ fontSize:10, color:secondary, letterSpacing:"0.1em", textTransform:"uppercase" }}>Rose Glow Serum</div>
-                        </div>
-                        <div style={{ position:"absolute", top:10, right:10, background:"rgba(61,90,62,0.9)", color:"white", fontSize:9, fontWeight:700, padding:"3px 8px", borderRadius:100 }}>PREVIEW</div>
-                      </div>
-                    </div>
-
-                    {/* Import to Shopify */}
-                    <button id="import-btn"
-                      style={{ display:"none", width:"100%", background:T.olive, border:"none", borderRadius:8, padding:"11px", color:"white", fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"'DM Sans',sans-serif", alignItems:"center", justifyContent:"center", gap:8 }}
-                      onClick={async () => {
-                        const btn = document.getElementById("import-btn");
-                        if (btn) { btn.textContent = "Importing to Shopify..."; btn.disabled = true; }
-                        // In production this would call the publish API with the mockup image
-                        setTimeout(() => {
-                          if (btn) { btn.innerHTML = "✓ Imported to Shopify!"; btn.style.background = "#2d6a4f"; btn.disabled = false; }
-                        }, 1500);
-                      }}>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                      Import to Shopify Store
-                    </button>
+                  <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:16, fontWeight:600, color:T.textPrimary, marginBottom:14 }}>Logo Upload</div>
+                  <div onDrop={e=>{e.preventDefault();setDrag(false);pickFile(e.dataTransfer.files[0]);}} onDragOver={e=>{e.preventDefault();setDrag(true);}} onDragLeave={()=>setDrag(false)} onClick={()=>fileRef.current?.click()}
+                    style={{ border:`2px dashed ${drag?T.olive:T.borderDefault}`, borderRadius:10, padding:"28px 20px", textAlign:"center", cursor:"pointer", background:drag?T.oliveSubtle:T.bgSurface, transition:"all 0.2s" }}>
+                    {logoUrl?(<div><img src={logoUrl} style={{ maxHeight:64, maxWidth:180, objectFit:"contain", margin:"0 auto 8px" }} /><div style={{ fontSize:12, color:T.textTertiary }}>Click to change</div></div>):(<div><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={T.textTertiary} strokeWidth="1.5" style={{ margin:"0 auto 10px" }}><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><div style={{ fontSize:13, fontWeight:500, color:T.textSecondary, marginBottom:4 }}>Drop logo or click to upload</div><div style={{ fontSize:11, color:T.textTertiary }}>PNG, JPG, SVG · max 2MB</div></div>)}
+                    <input ref={fileRef} type="file" accept="image/*" style={{ display:"none" }} onChange={e=>pickFile(e.target.files[0])} />
                   </div>
                 </div>
-              )}
-
-              {/* Style */}
-              {tab === "style" && (
                 <div className="bcard">
-                  <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:16, fontWeight:600, color:T.textPrimary, marginBottom:14 }}>Label Style</div>
-                  <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10 }}>
-                    {["Modern", "Classic", "Minimal", "Bold"].map(s => (
-                      <div key={s} onClick={() => setStyle(s)} style={{ background:style===s?T.oliveSubtle:T.bgSurface, border:`1px solid ${style===s?T.oliveBorder:T.borderSubtle}`, borderRadius:10, padding:"14px", cursor:"pointer", transition:"all 0.15s" }}>
-                        <div style={{ height:48, background:s==="Bold"?primary:bg, borderRadius:7, marginBottom:8, display:"flex", alignItems:"center", justifyContent:"center", border:s==="Minimal"?`1px solid ${primary}`:"none" }}>
-                          <span style={{ fontFamily:s==="Modern"||s==="Classic"?"Georgia,serif":"sans-serif", fontSize:s==="Bold"?13:11, fontWeight:s==="Bold"?800:400, color:s==="Bold"?"white":primary, letterSpacing:s==="Minimal"?"0.2em":"0.05em", fontStyle:s==="Classic"?"italic":"normal", textTransform:s==="Minimal"?"uppercase":"none" }}>{brandName||"Brand"}</span>
+                  <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:16, fontWeight:600, color:T.textPrimary, marginBottom:14 }}>Brand Identity</div>
+                  <div style={{ marginBottom:12 }}><label style={{ fontSize:10, fontWeight:700, color:T.textTertiary, textTransform:"uppercase", letterSpacing:"0.1em", display:"block", marginBottom:6 }}>Brand Name</label><input value={brandName} onChange={e=>setBrandName(e.target.value)} style={{ width:"100%", background:T.bgSurface, border:`1px solid ${T.borderSubtle}`, borderRadius:8, padding:"9px 12px", color:T.textPrimary, fontSize:14 }} /></div>
+                  <div><label style={{ fontSize:10, fontWeight:700, color:T.textTertiary, textTransform:"uppercase", letterSpacing:"0.1em", display:"block", marginBottom:6 }}>Tagline</label><input value={tagline} onChange={e=>setTagline(e.target.value)} style={{ width:"100%", background:T.bgSurface, border:`1px solid ${T.borderSubtle}`, borderRadius:8, padding:"9px 12px", color:T.textPrimary, fontSize:14 }} /></div>
+                </div>
+              </>)}
+
+              {/* COLORS */}
+              {tab==="colors" && (<>
+                <div className="bcard">
+                  <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:16, fontWeight:600, color:T.textPrimary, marginBottom:14 }}>Brand Colors</div>
+                  <div className="cgrid" style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
+                    {[{label:"Primary",val:primary,set:setPrimary},{label:"Secondary",val:secondary,set:setSecondary},{label:"Accent",val:accent,set:setAccent},{label:"Background",val:bg,set:setBg}].map(c=>(
+                      <div key={c.label}><label style={{ fontSize:10, fontWeight:700, color:T.textTertiary, textTransform:"uppercase", letterSpacing:"0.1em", display:"block", marginBottom:6 }}>{c.label}</label>
+                        <div style={{ display:"flex", alignItems:"center", gap:8, background:T.bgSurface, border:`1px solid ${T.borderSubtle}`, borderRadius:8, padding:"7px 10px" }}>
+                          <div style={{ position:"relative", width:28, height:28, borderRadius:6, overflow:"hidden", flexShrink:0 }}><input type="color" value={c.val} onChange={e=>c.set(e.target.value)} style={{ position:"absolute", inset:"-4px", width:"calc(100% + 8px)", height:"calc(100% + 8px)" }} /></div>
+                          <input value={c.val} onChange={e=>c.set(e.target.value)} style={{ background:"none", border:"none", color:T.textSecondary, fontSize:12, fontFamily:"monospace", flex:1 }} />
                         </div>
-                        <div style={{ fontSize:12, fontWeight:600, textAlign:"center", color:style===s?T.olive:T.textSecondary }}>{s}</div>
                       </div>
                     ))}
                   </div>
                 </div>
+                <div className="bcard">
+                  <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:16, fontWeight:600, color:T.textPrimary, marginBottom:12 }}>Preset Palettes</div>
+                  <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:8 }}>
+                    {PALETTES.map(p=>(
+                      <div key={p.name} className="pal-item" onClick={()=>{setPrimary(p.primary);setSecondary(p.secondary);setAccent(p.accent);setBg(p.bg);}}>
+                        <div style={{ display:"flex", gap:3, marginBottom:6 }}>{[p.primary,p.secondary,p.accent].map(c=><div key={c} style={{ width:12, height:12, borderRadius:"50%", background:c }} />)}</div>
+                        <div style={{ fontSize:10, fontWeight:600, color:T.textSecondary }}>{p.name}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </>)}
+
+              {/* STYLE */}
+              {tab==="style" && (<>
+                <div className="bcard"><div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:16, fontWeight:600, color:T.textPrimary, marginBottom:14 }}>Label Style</div><div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:8 }}>{LABEL_STYLES.map(s=><div key={s} onClick={()=>setStyle(s)} className={`opt-btn${style===s?" sel":""}`}>{s}</div>)}</div></div>
+                <div className="bcard"><div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:16, fontWeight:600, color:T.textPrimary, marginBottom:14 }}>Label Finish</div><div style={{ display:"grid", gridTemplateColumns:"repeat(5,1fr)", gap:8 }}>{FINISHES.map(f=><div key={f} onClick={()=>setFinish(f)} className={`opt-btn${finish===f?" sel":""}`}>{f}</div>)}</div></div>
+                <div className="bcard"><div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:16, fontWeight:600, color:T.textPrimary, marginBottom:14 }}>Label Layout</div><div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:8 }}>{LAYOUTS.map(l=><div key={l} onClick={()=>setLayout(l)} className={`opt-btn${layout===l?" sel":""}`}>{l}</div>)}</div></div>
+                <div className="bcard"><div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:16, fontWeight:600, color:T.textPrimary, marginBottom:14 }}>Font Style</div><div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:8 }}>{FONTS.map(f=><div key={f} onClick={()=>setFont(f)} className={`opt-btn${font===f?" sel":""}`}>{f}</div>)}</div></div>
+              </>)}
+
+              {/* MOCKUP GENERATOR */}
+              {tab==="mockup" && (
+                <div className="bcard">
+                  <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:6 }}>
+                    <div style={{ width:28, height:28, borderRadius:7, background:T.goldSubtle, border:`1px solid ${T.goldBorder}`, display:"flex", alignItems:"center", justifyContent:"center" }}><span style={{ fontSize:14 }}>✦</span></div>
+                    <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:16, fontWeight:600, color:T.textPrimary }}>AI Mockup Generator</div>
+                  </div>
+                  <p style={{ fontSize:12, color:T.textTertiary, marginBottom:16, lineHeight:1.6 }}>Claude AI generates a photo-realistic mockup description and Ideogram prompt using your exact brand settings. Copy the prompt into Ideogram to get the image.</p>
+
+                  <div style={{ marginBottom:12 }}><label style={{ fontSize:10, fontWeight:700, color:T.textTertiary, textTransform:"uppercase", letterSpacing:"0.1em", display:"block", marginBottom:6 }}>Product</label>
+                    <select value={selectedProduct} onChange={e=>setSelectedProduct(e.target.value)} style={{ width:"100%", background:T.bgSurface, border:`1px solid ${T.borderSubtle}`, borderRadius:7, padding:"8px 10px", color:T.textPrimary, fontSize:13, fontFamily:"'DM Sans',sans-serif" }}>{PRODUCTS.map(p=><option key={p}>{p}</option>)}</select>
+                  </div>
+
+                  <div style={{ marginBottom:14 }}><label style={{ fontSize:10, fontWeight:700, color:T.textTertiary, textTransform:"uppercase", letterSpacing:"0.1em", display:"block", marginBottom:6 }}>Scene Style</label>
+                    <div style={{ display:"grid", gridTemplateColumns:"repeat(2,1fr)", gap:8 }}>
+                      {["Studio White","Marble Flat Lay","Natural Lifestyle","Dark Luxury","Garden Fresh","Minimal Pastel"].map(s=><div key={s} onClick={()=>setMockupStyle(s)} className={`opt-btn${mockupStyle===s?" sel":""}`} style={{ fontSize:11 }}>{s}</div>)}
+                    </div>
+                  </div>
+
+                  <div style={{ background:T.bgBase, border:`1px solid ${T.borderSubtle}`, borderRadius:8, padding:10, marginBottom:14 }}>
+                    <div style={{ fontSize:10, fontWeight:700, color:T.textTertiary, textTransform:"uppercase", letterSpacing:"0.1em", marginBottom:6 }}>Using Your Brand</div>
+                    <div style={{ display:"flex", flexWrap:"wrap", gap:6 }}>
+                      {[{l:"Brand",v:brandName},{l:"Style",v:style},{l:"Finish",v:finish},{l:"Layout",v:layout},{l:"Font",v:font}].map(i=>(
+                        <div key={i.l} style={{ background:T.bgCard, border:`1px solid ${T.borderSubtle}`, borderRadius:6, padding:"3px 8px", fontSize:11 }}><span style={{ color:T.textTertiary }}>{i.l}: </span><span style={{ color:T.textPrimary, fontWeight:500 }}>{i.v}</span></div>
+                      ))}
+                      <div style={{ display:"flex", gap:3, alignItems:"center" }}>{[primary,secondary,accent].map(c=><div key={c} style={{ width:12, height:12, borderRadius:"50%", background:c }} />)}</div>
+                    </div>
+                  </div>
+
+                  <button onClick={generateMockup} disabled={generating} style={{ width:"100%", background:generating?T.bgSurface:T.olive, border:"none", borderRadius:8, padding:"11px", color:generating?T.textTertiary:"white", fontSize:13, fontWeight:600, cursor:generating?"default":"pointer", fontFamily:"'DM Sans',sans-serif", display:"flex", alignItems:"center", justifyContent:"center", gap:8, marginBottom:14 }}>
+                    {generating?(<><span style={{ width:14, height:14, border:"2px solid rgba(255,255,255,0.3)", borderTopColor:T.olive, borderRadius:"50%", display:"inline-block", animation:"spin 0.8s linear infinite" }}></span><span className="ai-pulse">Claude is generating...</span></>):"✦ Generate AI Mockup"}
+                  </button>
+
+                  {mockupResult && (
+                    <div style={{ background:T.bgBase, border:`1px solid ${T.oliveBorder}`, borderRadius:10, padding:14 }}>
+                      {/* Preview */}
+                      <div style={{ background:bg, borderRadius:10, padding:"20px", textAlign:"center", marginBottom:12, position:"relative", minHeight:160, display:"flex", alignItems:"center", justifyContent:"center" }}>
+                        <div>
+                          <div style={{ width:60, height:95, background:`linear-gradient(135deg,${primary},${secondary})`, borderRadius:8, margin:"0 auto 8px", display:"flex", alignItems:"center", justifyContent:"center", boxShadow:`0 6px 20px ${primary}40` }}>
+                            {logoUrl?<img src={logoUrl} style={{ width:38, height:38, objectFit:"contain" }} />:<span style={{ color:"white", fontSize:18, opacity:0.9 }}>✦</span>}
+                          </div>
+                          <div style={{ fontFamily:"Georgia,serif", fontSize:10, fontWeight:600, color:primary }}>{brandName}</div>
+                          <div style={{ fontSize:8, color:secondary, textTransform:"uppercase", letterSpacing:"0.1em", marginTop:2 }}>{selectedProduct}</div>
+                        </div>
+                        <div style={{ position:"absolute", top:6, right:6, background:"rgba(61,90,62,0.9)", color:"white", fontSize:8, fontWeight:700, padding:"2px 6px", borderRadius:100 }}>AI PREVIEW</div>
+                      </div>
+
+                      <div style={{ marginBottom:10 }}>
+                        <div style={{ fontSize:10, fontWeight:700, color:T.textTertiary, textTransform:"uppercase", letterSpacing:"0.1em", marginBottom:5 }}>Description</div>
+                        <p style={{ fontSize:12, color:T.textSecondary, lineHeight:1.7, background:T.bgCard, borderRadius:7, padding:10, border:`1px solid ${T.borderSubtle}` }}>{mockupResult.description}</p>
+                      </div>
+
+                      <div style={{ marginBottom:12 }}>
+                        <div style={{ fontSize:10, fontWeight:700, color:T.textTertiary, textTransform:"uppercase", letterSpacing:"0.1em", marginBottom:5 }}>Ideogram Prompt <span style={{ color:T.textTertiary, fontWeight:400, textTransform:"none", letterSpacing:0 }}>(copy into ideogram.ai)</span></div>
+                        <div style={{ background:T.bgCard, border:`1px solid ${T.goldBorder}`, borderRadius:7, padding:10, fontSize:11, color:T.gold, fontFamily:"monospace", lineHeight:1.6, position:"relative" }}>
+                          {mockupResult.ideogramPrompt}
+                          <button onClick={()=>navigator.clipboard.writeText(mockupResult.ideogramPrompt).then(()=>setToast({msg:"Prompt copied!",type:"success"}))} style={{ position:"absolute", top:6, right:6, background:T.goldSubtle, border:`1px solid ${T.goldBorder}`, borderRadius:5, padding:"3px 8px", fontSize:10, color:T.gold, cursor:"pointer", fontFamily:"'DM Sans',sans-serif" }}>Copy</button>
+                        </div>
+                      </div>
+
+                      <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:8, marginBottom:12 }}>
+                        {[{l:"Wholesale",v:`$${mockupResult.wholesalePrice||"22.99"}`,c:T.textSecondary},{l:"Retail",v:`$${mockupResult.retailPrice||"49.99"}`,c:T.textPrimary},{l:"Margin",v:`${mockupResult.margin||"54"}%`,c:T.olive}].map(i=>(
+                          <div key={i.l} style={{ background:T.bgCard, border:`1px solid ${T.borderSubtle}`, borderRadius:7, padding:"8px", textAlign:"center" }}>
+                            <div style={{ fontSize:9, fontWeight:700, color:T.textTertiary, textTransform:"uppercase", letterSpacing:"0.06em", marginBottom:3 }}>{i.l}</div>
+                            <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:17, fontWeight:600, color:i.c }}>{i.v}</div>
+                          </div>
+                        ))}
+                      </div>
+
+                      <button onClick={importToShopify} disabled={importing||importDone} style={{ width:"100%", background:importDone?"transparent":T.olive, border:importDone?`1px solid ${T.oliveBorder}`:"none", borderRadius:8, padding:"11px", color:importDone?T.olive:"white", fontSize:13, fontWeight:600, cursor:(importing||importDone)?"default":"pointer", fontFamily:"'DM Sans',sans-serif", display:"flex", alignItems:"center", justifyContent:"center", gap:8 }}>
+                        {importing?<><span style={{ width:13, height:13, border:"2px solid rgba(255,255,255,0.3)", borderTopColor:"white", borderRadius:"50%", display:"inline-block", animation:"spin 0.8s linear infinite" }}></span>Importing...</>:importDone?"✓ Imported to Shopify!":<><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Import to Shopify Store</>}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* AI CATALOGUE */}
+              {tab==="ai" && (
+                <div className="bcard">
+                  <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:6 }}>
+                    <div style={{ width:28, height:28, borderRadius:7, background:T.oliveSubtle, border:`1px solid ${T.oliveBorder}`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:14 }}>🤖</div>
+                    <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:16, fontWeight:600, color:T.textPrimary }}>AI Product Content Generator</div>
+                  </div>
+                  <p style={{ fontSize:12, color:T.textTertiary, marginBottom:16, lineHeight:1.6 }}>Claude AI writes compelling descriptions, pricing recommendations, SEO content, and tags — all tailored to your brand.</p>
+
+                  <div style={{ marginBottom:12 }}><label style={{ fontSize:10, fontWeight:700, color:T.textTertiary, textTransform:"uppercase", letterSpacing:"0.1em", display:"block", marginBottom:6 }}>Select Product</label>
+                    <select value={aiProduct} onChange={e=>setAiProduct(e.target.value)} style={{ width:"100%", background:T.bgSurface, border:`1px solid ${T.borderSubtle}`, borderRadius:7, padding:"8px 10px", color:T.textPrimary, fontSize:13, fontFamily:"'DM Sans',sans-serif" }}>{PRODUCTS.map(p=><option key={p}>{p}</option>)}</select>
+                  </div>
+
+                  <button onClick={generateCatalogue} disabled={aiGenerating} style={{ width:"100%", background:aiGenerating?T.bgSurface:T.olive, border:"none", borderRadius:8, padding:"11px", color:aiGenerating?T.textTertiary:"white", fontSize:13, fontWeight:600, cursor:aiGenerating?"default":"pointer", fontFamily:"'DM Sans',sans-serif", display:"flex", alignItems:"center", justifyContent:"center", gap:8, marginBottom:14 }}>
+                    {aiGenerating?(<><span style={{ width:14, height:14, border:"2px solid rgba(255,255,255,0.3)", borderTopColor:T.olive, borderRadius:"50%", display:"inline-block", animation:"spin 0.8s linear infinite" }}></span><span className="ai-pulse">Claude is writing your content...</span></>):"🤖 Generate with Claude AI"}
+                  </button>
+
+                  {aiResult && (
+                    <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+                      {aiResult.title && <div style={{ background:T.bgBase, border:`1px solid ${T.borderSubtle}`, borderRadius:8, padding:12 }}><div style={{ fontSize:10, fontWeight:700, color:T.textTertiary, textTransform:"uppercase", letterSpacing:"0.1em", marginBottom:4 }}>Product Title</div><div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:16, fontWeight:600, color:T.textPrimary }}>{aiResult.title}</div></div>}
+                      <div style={{ background:T.bgBase, border:`1px solid ${T.borderSubtle}`, borderRadius:8, padding:12 }}><div style={{ fontSize:10, fontWeight:700, color:T.textTertiary, textTransform:"uppercase", letterSpacing:"0.1em", marginBottom:6 }}>Full Description</div><p style={{ fontSize:13, color:T.textSecondary, lineHeight:1.7 }}>{aiResult.fullDesc}</p></div>
+                      {aiResult.keyBenefits && <div style={{ background:T.bgBase, border:`1px solid ${T.borderSubtle}`, borderRadius:8, padding:12 }}><div style={{ fontSize:10, fontWeight:700, color:T.textTertiary, textTransform:"uppercase", letterSpacing:"0.1em", marginBottom:8 }}>Key Benefits</div>{aiResult.keyBenefits.map((b,i)=><div key={i} style={{ display:"flex", gap:8, marginBottom:5 }}><span style={{ color:T.olive }}>✓</span><span style={{ fontSize:13, color:T.textSecondary }}>{b}</span></div>)}</div>}
+                      <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:8 }}>
+                        {[{l:"Wholesale",v:`$${aiResult.wholesaleCost||"22.99"}`,c:T.textSecondary},{l:"Retail",v:`$${aiResult.suggestedRetailPrice||"49.99"}`,c:T.textPrimary},{l:"Margin",v:`${aiResult.profitMargin||"54"}%`,c:T.olive}].map(i=>(
+                          <div key={i.l} style={{ background:T.bgCard, border:`1px solid ${T.borderSubtle}`, borderRadius:8, padding:"10px", textAlign:"center" }}><div style={{ fontSize:9, fontWeight:700, color:T.textTertiary, textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:3 }}>{i.l}</div><div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:18, fontWeight:600, color:i.c }}>{i.v}</div></div>
+                        ))}
+                      </div>
+                      {aiResult.tags && <div style={{ display:"flex", flexWrap:"wrap", gap:6 }}>{aiResult.tags.map(t=><span key={t} style={{ background:T.oliveSubtle, border:`1px solid ${T.oliveBorder}`, color:T.olive, fontSize:11, fontWeight:600, padding:"3px 10px", borderRadius:100 }}>#{t}</span>)}</div>}
+                      {aiResult.seoTitle && <div style={{ background:T.bgBase, border:`1px solid ${T.borderSubtle}`, borderRadius:8, padding:12 }}><div style={{ fontSize:10, fontWeight:700, color:T.textTertiary, textTransform:"uppercase", letterSpacing:"0.1em", marginBottom:4 }}>SEO Title</div><div style={{ fontSize:13, color:T.textPrimary, marginBottom:8 }}>{aiResult.seoTitle}</div>{aiResult.seoDescription&&<><div style={{ fontSize:10, fontWeight:700, color:T.textTertiary, textTransform:"uppercase", letterSpacing:"0.1em", marginBottom:4 }}>SEO Description</div><div style={{ fontSize:12, color:T.textSecondary }}>{aiResult.seoDescription}</div></>}</div>}
+                      <button onClick={()=>{navigator.clipboard.writeText(JSON.stringify(aiResult,null,2));setToast({msg:"Content copied!",type:"success"});}} style={{ background:T.bgSurface, border:`1px solid ${T.borderDefault}`, borderRadius:8, padding:"9px", color:T.textSecondary, fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"'DM Sans',sans-serif" }}>Copy All Content</button>
+                    </div>
+                  )}
+                </div>
               )}
             </div>
 
-            {/* Preview */}
+            {/* Live Preview */}
             <div style={{ position:"sticky", top:20 }}>
               <div className="bcard">
                 <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:15, fontWeight:600, color:T.textPrimary, marginBottom:14 }}>Live Preview</div>
                 <div style={{ background:bg, borderRadius:12, padding:"24px 18px", textAlign:"center", border:`1px solid ${primary}20`, marginBottom:12 }}>
-                  {logoUrl ? <img src={logoUrl} alt="logo" style={{ height:44, objectFit:"contain", margin:"0 auto 12px" }} /> : <div style={{ width:44, height:44, borderRadius:"50%", background:`linear-gradient(135deg,${primary},${secondary})`, margin:"0 auto 12px", display:"flex", alignItems:"center", justifyContent:"center", color:"white", fontSize:18 }}>✦</div>}
-                  <div style={{ fontFamily:style==="Modern"||style==="Classic"?"Georgia,serif":"sans-serif", fontSize:style==="Bold"?18:15, fontWeight:style==="Bold"?800:600, color:primary, letterSpacing:style==="Minimal"?"0.18em":"0.05em", fontStyle:style==="Classic"?"italic":"normal", textTransform:style==="Minimal"?"uppercase":"none", marginBottom:5 }}>{brandName}</div>
-                  <div style={{ fontSize:9, color:secondary, letterSpacing:"0.12em", textTransform:"uppercase", opacity:0.7, marginBottom:14 }}>{tagline}</div>
-                  <div style={{ width:28, height:1, background:primary, margin:"0 auto 12px", opacity:0.5 }}></div>
-                  <div style={{ fontSize:12, color:secondary }}>Rose Glow Serum · 30ml</div>
+                  {logoUrl?<img src={logoUrl} style={{ height:44, objectFit:"contain", margin:"0 auto 12px" }} />:<div style={{ width:44, height:44, borderRadius:"50%", background:`linear-gradient(135deg,${primary},${secondary})`, margin:"0 auto 12px", display:"flex", alignItems:"center", justifyContent:"center", color:"white", fontSize:18 }}>✦</div>}
+                  <div style={{ fontFamily:font.includes("Serif")?"Georgia,serif":"sans-serif", fontSize:font.includes("Bold")?17:14, fontWeight:font.includes("Bold")?800:600, color:primary, letterSpacing:layout==="Minimal"?"0.18em":"0.05em", fontStyle:style==="Classic"?"italic":"normal", textTransform:layout==="Minimal"?"uppercase":"none", marginBottom:5 }}>{brandName}</div>
+                  <div style={{ fontSize:9, color:secondary, letterSpacing:"0.12em", textTransform:"uppercase", opacity:0.7, marginBottom:12 }}>{tagline}</div>
+                  <div style={{ width:28, height:1, background:primary, margin:"0 auto 10px", opacity:0.5 }}></div>
+                  <div style={{ fontSize:11, color:secondary }}>Rose Glow Serum · 30ml</div>
+                  <div style={{ fontSize:9, color:accent, marginTop:4, opacity:0.7 }}>{finish} finish · {layout}</div>
                 </div>
-                <div style={{ display:"flex", gap:6 }}>
-                  {[{ label:"Primary", color:primary }, { label:"Secondary", color:secondary }, { label:"Accent", color:accent }].map(c => (
-                    <div key={c.label} style={{ flex:1, background:T.bgSurface, borderRadius:7, padding:"7px 4px", textAlign:"center", border:`1px solid ${T.borderSubtle}` }}>
-                      <div style={{ width:14, height:14, borderRadius:"50%", background:c.color, margin:"0 auto 4px" }}></div>
-                      <div style={{ fontSize:8, fontWeight:600, color:T.textTertiary, textTransform:"uppercase" }}>{c.label}</div>
+                <div style={{ display:"flex", flexDirection:"column", gap:5 }}>
+                  {[{l:"Style",v:style},{l:"Finish",v:finish},{l:"Layout",v:layout},{l:"Font",v:font}].map(i=>(
+                    <div key={i.l} style={{ display:"flex", justifyContent:"space-between", fontSize:11, padding:"4px 0", borderBottom:`1px solid ${T.borderSubtle}` }}><span style={{ color:T.textTertiary }}>{i.l}</span><span style={{ color:T.textPrimary, fontWeight:500 }}>{i.v}</span></div>
+                  ))}
+                </div>
+                <div style={{ display:"flex", gap:6, marginTop:10 }}>
+                  {[{l:"Primary",c:primary},{l:"Secondary",c:secondary},{l:"Accent",c:accent}].map(i=>(
+                    <div key={i.l} style={{ flex:1, background:T.bgSurface, borderRadius:7, padding:"6px 4px", textAlign:"center", border:`1px solid ${T.borderSubtle}` }}>
+                      <div style={{ width:14, height:14, borderRadius:"50%", background:i.c, margin:"0 auto 4px" }}></div>
+                      <div style={{ fontSize:8, fontWeight:600, color:T.textTertiary, textTransform:"uppercase" }}>{i.l}</div>
                     </div>
                   ))}
                 </div>
